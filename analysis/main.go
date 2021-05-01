@@ -39,6 +39,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 	metrics := []metric{}
 
 	dashboardColumnPosition := 0
+	alreadyGotErrors := false
 
 	inspect.Preorder(nodeFilter, func(node ast.Node) {
 		switch stmt := node.(type) {
@@ -66,7 +67,13 @@ func run(pass *analysis.Pass) (interface{}, error) {
 						if strings.HasPrefix(metricCall, "Counter") {
 							metricType = "counter"
 						} else if strings.HasPrefix(metricCall, "Error") {
+							if alreadyGotErrors {
+								return
+							}
+
+							alreadyGotErrors = true
 							metricType = "errors"
+
 						} else if strings.HasPrefix(metricCall, "Gauge") {
 							metricType = "gauge"
 						} else if strings.HasPrefix(metricCall, "Histo") {
