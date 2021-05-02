@@ -1,4 +1,4 @@
-package analysis
+package generation
 
 import (
 	"errors"
@@ -24,9 +24,10 @@ var DashboardGenerator = &analysis.Analyzer{
 const PromenadePkg = "github.com/poblish/promenade/api.PrometheusMetrics"
 
 func run(pass *analysis.Pass) (interface{}, error) {
-	fmt.Println(">>> Starting run", pass.Pkg)
+	fmt.Println(">>> Starting run", pass.IgnoredFiles)
 
 	inspect, ok := pass.ResultOf[inspect.Analyzer].(*inspector.Inspector)
+	// fmt.Println(reflect.TypeOf(inspect))
 	if !ok {
 		return nil, errors.New("analyzer is not type *inspector.Inspector")
 	}
@@ -64,7 +65,7 @@ func run(pass *analysis.Pass) (interface{}, error) {
 						// fmt.Println(metricCall, metricName, "=>", fullMetricName)
 
 						metricType := ""
-						if strings.HasPrefix(metricCall, "Counter") {
+						if strings.HasPrefix(metricCall, "Counter") { // FIXME Parse arg #1 of CounterWithLabel (string) & CounterWithLabels ([]string)
 							metricType = "counter"
 						} else if strings.HasPrefix(metricCall, "Error") {
 							if alreadyGotErrors {

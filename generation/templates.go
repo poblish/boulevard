@@ -1,4 +1,4 @@
-package analysis
+package generation
 
 const DefaultDashboardTemplate = `{{define "counter_gauge"}}
 {
