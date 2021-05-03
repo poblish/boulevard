@@ -47,7 +47,7 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 						if strings.HasSuffix(typeName, PromenadePkg) && mthd.Sel.Name != "TestHelper" {
 							metricName := stripQuotes(stmt.Args[0].(*ast.BasicLit).Value)
 
-							newMetric := dg.interceptMetric(mthd.Sel.Name, metricName)
+							newMetric := dg.interceptMetric(mthd.Sel.Name, metricName, stmt.Args)
 							if newMetric != nil {
 								metrics = append(metrics, newMetric)
 							}
@@ -88,7 +88,7 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 						if strings.HasSuffix(subExprTypeName, PromenadePkg) && mthd.Sel.Name != "TestHelper" {
 							metricName := stripQuotes(stmt.Args[0].(*ast.BasicLit).Value)
 
-							newMetric := dg.interceptMetric(mthd.Sel.Name, metricName)
+							newMetric := dg.interceptMetric(mthd.Sel.Name, metricName, stmt.Args)
 							if newMetric != nil {
 								metrics = append(metrics, newMetric)
 							}
@@ -141,7 +141,7 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 	return tErr
 }
 
-func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName string) *metric {
+func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName string, metricCallArgs []ast.Expr) *metric {
 	var normalisedMetricName string
 	if dg.caseSensitiveMetricNames {
 		normalisedMetricName = normalizer.Replace(metricName)
