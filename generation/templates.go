@@ -1,6 +1,6 @@
 package generation
 
-const DefaultDashboardTemplate = `{{define "counter_gauge"}}
+const DefaultDashboardTemplate = `{{define "counter_gauge_cumulative"}}
 {
   "bars": false,
   "dashLength": 10,
@@ -23,7 +23,39 @@ const DefaultDashboardTemplate = `{{define "counter_gauge"}}
   "timeFrom": null,
   "timeRegions": [],
   "timeShift": null,
-  "title": "{{ .PanelTitle }}",
+  "title": "{{ .PanelTitle }} (cumulative)",
+  "tooltip": {"shared": true,"sort": 0,"value_type": "individual"},
+  "type": "graph",
+  "xaxis": {"buckets": null,"mode": "time","name": null,"show": true,"values": []},
+  "yaxes": [{"format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true},{"format": "short", "label": null, "logBase": 1, "max": null, "min": null, "show": true}],
+  "yaxis": {"align": false,"alignLevel": null}
+}
+{{end}}
+
+{{define "counter_gauge_rate"}}
+{
+  "bars": false,
+  "dashLength": 10,
+  "dashes": false,
+  "datasource": "prometheus",
+  "fill": 1,
+  "gridPos": {"h": 9,"w": 12,"x": {{ panelColumn }},"y": 0},
+  "id": {{ incrementingPanelId }},
+  "legend": {"avg": false,"current": false,"max": false,"min": false,"show": true,"total": false,"values": false},
+  "lines": true,
+  "linewidth": 1,
+  "percentage": false,
+  "pointradius": 5,
+  "points": false,
+  "seriesOverrides": [],
+  "spaceLength": 10,
+  "stack": false,
+  "targets": [{"expr": "sum(rate({{ .FullMetricName }}[15m])){{ .MetricLabels }}", "intervalFactor": 1, "refId": "A"}],
+  "thresholds": [],
+  "timeFrom": null,
+  "timeRegions": [],
+  "timeShift": null,
+  "title": "{{ .PanelTitle }} (rate)",
   "tooltip": {"shared": true,"sort": 0,"value_type": "individual"},
   "type": "graph",
   "xaxis": {"buckets": null,"mode": "time","name": null,"show": true,"values": []},
@@ -111,7 +143,8 @@ const DefaultDashboardTemplate = `{{define "counter_gauge"}}
 
 {{range $index, $metric := .Metrics }}{{if $index}},{{end}}
     {{if eq $metric.MetricType "counter" "gauge" }}
-        {{template "counter_gauge" . }}
+        {{template "counter_gauge_cumulative" . }},
+        {{template "counter_gauge_rate" . }}
     {{else if eq $metric.MetricType "errors"}}
         {{template "errors" . }}
     {{else if eq $metric.MetricType "summary" "timer"}}
