@@ -109,13 +109,16 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 
 	// Complete...
 	dashboardColumnPosition := 0
+	panelId := 1
 
 	for _, eachMetric := range metrics {
 		eachMetric.MetricsPrefix = dg.currentMetricPrefix
 		eachMetric.FullMetricName = dg.currentMetricPrefix + eachMetric.normalisedMetricName
 		eachMetric.PanelColumn = dashboardColumnPosition
+		eachMetric.PanelId = panelId
 
 		dashboardColumnPosition = 12 - dashboardColumnPosition // of 24
+		panelId++
 
 		fmt.Println(eachMetric.metricCall, "=>", eachMetric.FullMetricName)
 	}
@@ -173,6 +176,7 @@ type metric struct {
 	normalisedMetricName string
 
 	PanelColumn    int
+	PanelId        int
 	MetricsPrefix  string
 	MetricType     string
 	FullMetricName string
