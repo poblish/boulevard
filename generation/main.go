@@ -153,8 +153,10 @@ func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName stri
 		metricType = "gauge"
 	} else if strings.HasPrefix(metricCall, "Histo") {
 		metricType = "histogram"
-	} else if strings.HasPrefix(metricCall, "Summary") || strings.HasPrefix(metricCall, "Timer") {
-		metricType = "gauge"
+	} else if strings.HasPrefix(metricCall, "Timer") {
+		metricType = "timer"
+	} else if strings.HasPrefix(metricCall, "Summary") {
+		metricType = "summary"
 	}
 
 	return &metric{metricCall: metricCall, normalisedMetricName: normalisedMetricName, PanelTitle: metricName, MetricType: metricType}
