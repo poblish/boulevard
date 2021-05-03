@@ -21,6 +21,8 @@ type DashboardGenerator struct {
 	foundMetricsObject       bool
 }
 
+var globalIncrementingPanelId int
+
 func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 	nodeFilter := []ast.Node{(*ast.CallExpr)(nil)}
 
@@ -108,8 +110,6 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 	}
 
 	// Complete...
-	dashboardColumnPosition := 0
-	panelId := 1
 	metricsIntercepted := make(map[string]bool)
 
 	for _, eachMetric := range metrics {
@@ -122,17 +122,23 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 		}
 		metricsIntercepted[eachMetric.FullMetricName] = true
 
-		eachMetric.PanelColumn = dashboardColumnPosition
-		eachMetric.PanelId = panelId
-
-		dashboardColumnPosition = 12 - dashboardColumnPosition // of 24
-		panelId++
-
 		fmt.Println(eachMetric.metricCall, "=>", eachMetric.FullMetricName)
 	}
 
-	tmpl, _ := template.New("default").Parse(DefaultDashboardTemplate)
 	// tmpl := template.Must(template.ParseGlob("/Users/andrewregan/Development/Go\\ work/promenade/templates/dashboard.json"))
+
+	tmpl, _ := template.New("default").Funcs(template.FuncMap{
+
+		"incrementingPanelId": func() int {
+			globalIncrementingPanelId++
+			return globalIncrementingPanelId
+		},
+
+		"panelColumn": func() int {
+			return (globalIncrementingPanelId % 2) * 12 // Switch from left to right, 2 abreast
+		},
+	}).Parse(DefaultDashboardTemplate)
+
 	tErr := tmpl.Execute(os.Stdout, &dashboardData{Metrics: metrics, Title: "MyTitle", Id: "MyId"})
 	if tErr != nil {
 		log.Fatalf("template execution: %s", tErr)
@@ -206,8 +212,6 @@ type metric struct {
 	metricCall           string
 	normalisedMetricName string
 
-	PanelColumn    int
-	PanelId        int
 	MetricsPrefix  string
 	MetricType     string
 	MetricLabels   string
