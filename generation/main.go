@@ -110,10 +110,18 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 	// Complete...
 	dashboardColumnPosition := 0
 	panelId := 1
+	metricsIntercepted := make(map[string]bool)
 
 	for _, eachMetric := range metrics {
 		eachMetric.MetricsPrefix = dg.currentMetricPrefix
 		eachMetric.FullMetricName = dg.currentMetricPrefix + eachMetric.normalisedMetricName
+
+		// Met this *full* name before?
+		if _, ok := metricsIntercepted[eachMetric.FullMetricName]; ok {
+			continue
+		}
+		metricsIntercepted[eachMetric.FullMetricName] = true
+
 		eachMetric.PanelColumn = dashboardColumnPosition
 		eachMetric.PanelId = panelId
 
