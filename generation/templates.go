@@ -18,7 +18,7 @@ const DefaultDashboardTemplate = `{{define "counter_gauge"}}
   "seriesOverrides": [],
   "spaceLength": 10,
   "stack": false,
-  "targets": [{"expr": "sum({{ .FullMetricName }})", "intervalFactor": 1, "refId": "A"}],
+  "targets": [{"expr": "sum({{ .FullMetricName }}){{ .MetricLabels }}", "intervalFactor": 1, "refId": "A"}],
   "thresholds": [],
   "timeFrom": null,
   "timeRegions": [],

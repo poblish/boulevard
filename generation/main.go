@@ -150,8 +150,31 @@ func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName stri
 	}
 
 	metricType := ""
-	if strings.HasPrefix(metricCall, "Counter") { // FIXME Parse arg #1 of CounterWithLabel (string) & CounterWithLabels ([]string)
-		metricType = "counter"
+	metricLabelString := ""
+
+	if strings.HasPrefix(metricCall, "Counter") {
+		if metricCall == "CounterWithLabels" {
+
+			multipleLabels := metricCallArgs[1].(*ast.CompositeLit).Elts
+			labelNames := make([]string, len(multipleLabels))
+
+			for i, entry := range multipleLabels {
+				labelNames[i] = stripQuotes(entry.(*ast.BasicLit).Value)
+			}
+
+			metricLabelString = fmt.Sprintf(" by (%s)", strings.Join(labelNames, ","))
+
+			metricType = "counter"
+		} else if metricCall == "CounterWithLabel" {
+
+			singleLabel := stripQuotes(metricCallArgs[1].(*ast.BasicLit).Value)
+			metricLabelString = fmt.Sprintf(" by (%s)", singleLabel)
+
+			metricType = "counter"
+		} else {
+			metricType = "counter"
+		}
+
 	} else if strings.HasPrefix(metricCall, "Error") {
 		if dg.alreadyGotErrors {
 			return nil
@@ -170,7 +193,7 @@ func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName stri
 		metricType = "summary"
 	}
 
-	return &metric{metricCall: metricCall, normalisedMetricName: normalisedMetricName, PanelTitle: metricName, MetricType: metricType}
+	return &metric{metricCall: metricCall, normalisedMetricName: normalisedMetricName, PanelTitle: metricName, MetricType: metricType, MetricLabels: metricLabelString}
 }
 
 type dashboardData struct {
@@ -187,6 +210,7 @@ type metric struct {
 	PanelId        int
 	MetricsPrefix  string
 	MetricType     string
+	MetricLabels   string
 	FullMetricName string
 	PanelTitle     string
 }
