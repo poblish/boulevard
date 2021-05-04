@@ -1,6 +1,6 @@
 # Boulevard
 
-Auto-generate Grafana dashboards via static analysis from usage of the [Promenade](https://github.com/poblish/promenade) Golang Prometheus client.
+Auto-generate Grafana dashboards and Prometheus alert rules via static analysis from usage of the [Promenade](https://github.com/poblish/promenade) Golang Prometheus client.
 
 **Set up code:**
 
@@ -16,9 +16,17 @@ import (
 	"github.com/poblish/promenade/api"
 )
 
+/*  Define two rules:
+
+    @AlertDefaults(displayPrefix = Application, severity = warning, team = myTeam) => optional
+
+    @ZeroToleranceErrorAlertRule(name = calcError, errorLabel="e", severity = pager, summary = Calculation error, description = "A calculation failed unexpectedly")
+
+    @ElevatedErrorRateAlertRule(name = calcProblems, errorLabel="e", timeRange=10m, ratePerSecondThreshold=0.5, summary = More errors, description = "Too high error rate")
+*/
 func main() {
 	metrics := api.NewMetrics(promenade.MetricOpts{MetricNamePrefix: "prefix"})
-	metrics.Counter("c")
+	metrics.Counter("c").Inc()
 	metrics.CounterWithLabel("places", "city").IncLabel("London")
 	metrics.CounterWithLabels("animals", []string{"type", "breed"}).IncLabel("cat", "persian")
 	metrics.Error("e")
@@ -32,12 +40,11 @@ $ export PATH="$PATH:/Users/.../go/bin"
 $ ./install.sh
 ````
 
-**Generate:**
+**Generate dashboard:**
 
 ````bash
 $ cd example
 $ boulevard   ## optional --pkg github.com/my/pkg --pkg ...
-$
 
 {
   "annotations": {
@@ -50,4 +57,31 @@ $
   "graphTooltip": 0,
   "id": 26,
   ...
+````
+
+**Generate alert rules YAML:**
+
+````bash
+$ boulevard
+
+name: Application auto-generated alerts
+rules:
+- alert: ApplicationCalcError
+  expr: sum(rate(prefix_errors{error_type='e'}[1m])) > 0
+  duration: 1m
+  labels:
+    severity: pager
+    team: myTeam
+  annotations:
+    description: A calculation failed unexpectedly
+    summary: Calculation error
+- alert: ApplicationCalcProblems
+  expr: sum(rate(prefix_errors{error_type='e'}[10m])) > 0.5
+  duration: 5m
+  labels:
+    severity: warning
+    team: myTeam
+  annotations:
+    description: Too high error rate
+    summary: More errors
 ````

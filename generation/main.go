@@ -15,6 +15,8 @@ import (
 const PromenadePkg = "github.com/poblish/promenade/api.PrometheusMetrics"
 
 type DashboardGenerator struct {
+	RuleGenerator
+	rawMetricPrefix          string
 	currentMetricPrefix      string
 	caseSensitiveMetricNames bool
 	alreadyGotErrors         bool
@@ -24,20 +26,25 @@ type DashboardGenerator struct {
 var globalIncrementingPanelId int
 
 func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
-	nodeFilter := []ast.Node{(*ast.CallExpr)(nil)}
+	nodeFilter := []ast.Node{(*ast.CommentGroup)(nil), (*ast.CallExpr)(nil)}
 
 	metrics := []*metric{}
 
+	dg.rawMetricPrefix = ""
 	dg.currentMetricPrefix = ""
 	dg.caseSensitiveMetricNames = false
 	dg.alreadyGotErrors = false
 	dg.foundMetricsObject = false
+
+	numPrefixesConfigured := 0
 
 	for _, eachPkg := range loadedPkgs {
 		fmt.Println(">> Examining", eachPkg.PkgPath)
 
 		inspector.New(eachPkg.Syntax).Preorder(nodeFilter, func(node ast.Node) {
 			switch stmt := node.(type) {
+			case *ast.CommentGroup:
+				dg.processAlertAnnotations(stmt)
 			case *ast.CallExpr:
 
 				if mthd, ok := stmt.Fun.(*ast.SelectorExpr); ok {
@@ -61,7 +68,6 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 
 								dg.foundMetricsObject = true
 
-								rawMetricPrefix := ""
 								rawPrefixSeparator := "_" // as per Prometheus lib standard
 
 								// Parse the single argument to NewMetrics, deconstruct the Opts
@@ -69,7 +75,7 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 									if kv, ok := elt.(*ast.KeyValueExpr); ok {
 										switch kv.Key.(*ast.Ident).Name {
 										case "MetricNamePrefix":
-											rawMetricPrefix = stripQuotes(kv.Value.(*ast.BasicLit).Value)
+											dg.rawMetricPrefix = stripQuotes(kv.Value.(*ast.BasicLit).Value)
 										case "PrefixSeparator":
 											rawPrefixSeparator = stripQuotes(kv.Value.(*ast.BasicLit).Value)
 										case "CaseSensitiveMetricNames":
@@ -78,10 +84,12 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 									}
 								}
 
-								dg.currentMetricPrefix = normaliseAndLowercaseName(rawMetricPrefix)
+								dg.currentMetricPrefix = normaliseAndLowercaseName(dg.rawMetricPrefix)
 								if dg.currentMetricPrefix != "" && !strings.HasSuffix(dg.currentMetricPrefix, rawPrefixSeparator) {
 									dg.currentMetricPrefix += rawPrefixSeparator
 								}
+
+								numPrefixesConfigured++
 							}
 						}
 					} else if subExpr, ok := mthd.X.(*ast.SelectorExpr); ok /* Nested calls like `defer x.Timer()` */ {
@@ -124,6 +132,8 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 
 		fmt.Println(eachMetric.metricCall, "=>", eachMetric.FullMetricName)
 	}
+
+	dg.RuleGenerator.postProcess(dg.currentMetricPrefix, numPrefixesConfigured > 1, dg.rawMetricPrefix, metricsIntercepted)
 
 	// tmpl := template.Must(template.ParseGlob("/Users/andrewregan/Development/Go\\ work/promenade/templates/dashboard.json"))
 
