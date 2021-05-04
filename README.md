@@ -59,7 +59,7 @@ $ boulevard   ## optional --pkg github.com/my/pkg --pkg ...
   ...
 ````
 
-**Generate alert rules YAML:**
+**Generate validated alert rules YAML:**
 
 ````bash
 $ boulevard
