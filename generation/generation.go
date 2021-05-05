@@ -137,9 +137,11 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) []
 	return metrics
 }
 
-func (dg *DashboardGenerator) Generate(metrics []*metric) error {
-	dg.RuleGenerator.postProcess(dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.rawMetricPrefix, dg.metricsIntercepted)
+func (dg *DashboardGenerator) GenerateAlertRules(filePath string, metrics []*metric) error {
+	return dg.RuleGenerator.postProcess(filePath, dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.rawMetricPrefix, dg.metricsIntercepted)
+}
 
+func (dg *DashboardGenerator) GenerateGrafanaDashboard(filePath string, metrics []*metric) error {
 	// tmpl := template.Must(template.ParseGlob("/Users/andrewregan/Development/Go\\ work/promenade/templates/dashboard.json"))
 
 	tmpl, _ := template.New("default").Funcs(template.FuncMap{
@@ -154,10 +156,17 @@ func (dg *DashboardGenerator) Generate(metrics []*metric) error {
 		},
 	}).Parse(DefaultDashboardTemplate)
 
-	tErr := tmpl.Execute(os.Stdout, &dashboardData{Metrics: metrics, Title: "MyTitle", Id: "MyId"})
+	outputFile, err := os.Create(filePath)
+	if err != nil {
+		log.Fatalf("Output file creation failed: %s", err)
+	}
+
+	tErr := tmpl.Execute(outputFile, &dashboardData{Metrics: metrics, Title: "MyTitle", Id: "MyId"})
 	if tErr != nil {
 		log.Fatalf("template execution: %s", tErr)
 	}
+
+	outputFile.Close()
 
 	return tErr
 }

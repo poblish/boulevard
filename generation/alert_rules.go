@@ -3,6 +3,7 @@ package generation
 import (
 	"fmt"
 	"go/ast"
+	"io/ioutil"
 	"log"
 	"strings"
 
@@ -33,7 +34,7 @@ func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup)
 	}
 }
 
-func (rg *RuleGenerator) postProcess(metricPrefix string, multiplePrefixesFound bool, defaultDisplayPrefix string, fqnsInUse map[string]bool) {
+func (rg *RuleGenerator) postProcess(filePath string, metricPrefix string, multiplePrefixesFound bool, defaultDisplayPrefix string, fqnsInUse map[string]bool) error {
 	alertEntries := make([]AlertRuleOutput, len(rg.alertRules))
 
 	var displayPrefix string
@@ -100,8 +101,12 @@ func (rg *RuleGenerator) postProcess(metricPrefix string, multiplePrefixesFound 
 		log.Fatalf("Alert marshalling error: %v", err)
 	}
 
-	fmt.Println("=== YAML ===")
-	fmt.Println(string(data))
+	err = ioutil.WriteFile(filePath, data, 0644)
+	if err != nil {
+		log.Fatalf("Output error: %v", err)
+	}
+
+	return err
 }
 
 func (rg *RuleGenerator) parseZeroToleranceErrorAlertRule(comment string) {

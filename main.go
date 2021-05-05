@@ -29,9 +29,14 @@ func main() {
 	generator := &generation.DashboardGenerator{}
 	metrics := generator.DiscoverMetrics(loadedPkgs)
 
-	err = generator.Generate(metrics)
+	err = generator.GenerateAlertRules("alert_rules.yaml", metrics)
 	if err != nil {
-		log.Fatalf("Run failed %s", err)
+		log.Fatalf("Alert rule generation failed %s", err)
+	}
+
+	err = generator.GenerateGrafanaDashboard("grafana_dashboard.json", metrics)
+	if err != nil {
+		log.Fatalf("Generation failed %s", err)
 	}
 }
 
