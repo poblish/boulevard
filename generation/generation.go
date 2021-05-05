@@ -131,8 +131,10 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) []
 		}
 		dg.metricsIntercepted[eachMetric.FullMetricName] = true
 
-		fmt.Println(eachMetric.metricCall, "=>", eachMetric.FullMetricName)
+		// fmt.Println(eachMetric.metricCall, "=>", eachMetric.FullMetricName)
 	}
+
+	fmt.Println(len(dg.metricsIntercepted), "metrics discovered")
 
 	return metrics
 }

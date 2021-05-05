@@ -1,7 +1,6 @@
 package generation
 
 import (
-	"fmt"
 	"go/ast"
 	"io/ioutil"
 	"log"
@@ -132,7 +131,6 @@ func (rg *RuleGenerator) parseElevatedErrorRateAlertRule(comment string) {
 func (rg *RuleGenerator) parseAlertDefaults(comment string) {
 	props := make(map[string]string)
 	parsePayload(comment, props)
-	fmt.Println(props)
 
 	rg.defaults = &AlertDefaults{displayPrefix: props["displayPrefix"], team: props["team"], severity: props["severity"]}
 }
