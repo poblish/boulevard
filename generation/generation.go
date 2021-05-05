@@ -27,7 +27,7 @@ type DashboardGenerator struct {
 
 var globalIncrementingPanelId int
 
-func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) []*metric {
+func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([]*metric, error) {
 	nodeFilter := []ast.Node{(*ast.CommentGroup)(nil), (*ast.CallExpr)(nil)}
 
 	metrics := []*metric{}
@@ -39,13 +39,15 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) []
 	dg.foundMetricsObject = false
 	dg.numPrefixesConfigured = 0
 
+	var err error
+
 	for _, eachPkg := range loadedPkgs {
 		fmt.Println(">> Examining", eachPkg.PkgPath)
 
 		inspector.New(eachPkg.Syntax).Preorder(nodeFilter, func(node ast.Node) {
 			switch stmt := node.(type) {
 			case *ast.CommentGroup:
-				dg.processAlertAnnotations(stmt)
+				err = dg.processAlertAnnotations(stmt)
 			case *ast.CallExpr:
 
 				if mthd, ok := stmt.Fun.(*ast.SelectorExpr); ok {
@@ -110,6 +112,10 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) []
 		})
 	}
 
+	if err != nil {
+		return metrics, err
+	}
+
 	if !dg.foundMetricsObject {
 		log.Fatalf("ERROR: No Metrics found")
 	}
@@ -136,7 +142,7 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) []
 
 	fmt.Println(len(dg.metricsIntercepted), "metrics discovered")
 
-	return metrics
+	return metrics, nil
 }
 
 func (dg *DashboardGenerator) GenerateAlertRules(filePath string, metrics []*metric) error {

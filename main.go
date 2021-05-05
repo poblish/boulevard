@@ -27,7 +27,10 @@ func main() {
 	}
 
 	generator := &generation.DashboardGenerator{}
-	metrics := generator.DiscoverMetrics(loadedPkgs)
+	metrics, err := generator.DiscoverMetrics(loadedPkgs)
+	if err != nil {
+		log.Fatalf("Metrics discovery failed %s", err)
+	}
 
 	// FIXME Hardcoded name
 	err = generator.GenerateAlertRules("alert_rules.yaml", metrics)

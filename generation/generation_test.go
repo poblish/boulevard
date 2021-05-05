@@ -24,7 +24,7 @@ func TestBasic(t *testing.T) {
 	assert.NoError(t, err)
 
 	generator := &DashboardGenerator{}
-	metrics := generator.DiscoverMetrics(loadedPkgs)
+	metrics, _ := generator.DiscoverMetrics(loadedPkgs)
 	assert.Equal(t, len(metrics), 9)
 
 	names := make([]string, len(metrics))
@@ -77,7 +77,7 @@ func TestAlertRuleGeneration(t *testing.T) {
 	assert.NoError(t, err)
 
 	generator := &DashboardGenerator{}
-	metrics := generator.DiscoverMetrics(loadedPkgs)
+	metrics, _ := generator.DiscoverMetrics(loadedPkgs)
 
 	tempFile, err := ioutil.TempFile("", "x*.yaml")
 	if err != nil {
@@ -98,7 +98,7 @@ func TestGrafanaDashboardGeneration(t *testing.T) {
 	assert.NoError(t, err)
 
 	generator := &DashboardGenerator{}
-	metrics := generator.DiscoverMetrics(loadedPkgs)
+	metrics, _ := generator.DiscoverMetrics(loadedPkgs)
 
 	tempFile, err := ioutil.TempFile("", "dash*.json")
 	if err != nil {

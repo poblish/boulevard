@@ -1,9 +1,9 @@
 package generation
 
 import (
+	"fmt"
 	"go/ast"
 	"io/ioutil"
-	"log"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -14,7 +14,7 @@ type RuleGenerator struct {
 	alertRules []AlertRule
 }
 
-func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup) {
+func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup) error {
 	if commentGroup != nil {
 		for _, comment := range commentGroup.List {
 			for _, eachLine := range strings.Split(strings.ReplaceAll(comment.Text, "\r\n", "\n"), "\n") {
@@ -24,13 +24,15 @@ func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup)
 					rg.parseElevatedErrorRateAlertRule(eachLine)
 				} else if strings.Contains(eachLine, "@AlertDefaults") {
 					if rg.defaults != nil {
-						log.Fatalf("Only one @AlertDefaults allowed per project") // surely too strict...
+						return fmt.Errorf("only one @AlertDefaults allowed per project") // surely too strict...
 					}
 					rg.parseAlertDefaults(eachLine)
 				}
 			}
 		}
 	}
+
+	return nil
 }
 
 func (rg *RuleGenerator) postProcess(filePath string, metricPrefix string, multiplePrefixesFound bool, defaultDisplayPrefix string, fqnsInUse map[string]bool) error {
@@ -77,7 +79,7 @@ func (rg *RuleGenerator) postProcess(filePath string, metricPrefix string, multi
 
 		// Validate errorLabel is an actual metric name
 		if _, ok := fqnsInUse[alertMetricFqn]; !ok {
-			log.Fatalf("Alert refers to missing metric %s", alertMetricFqn)
+			return fmt.Errorf("alert refers to missing metric %s", alertMetricFqn)
 		}
 
 		alertName := displayPrefix + strings.Title(ruleProps["name"])
@@ -97,12 +99,12 @@ func (rg *RuleGenerator) postProcess(filePath string, metricPrefix string, multi
 
 	data, err := yaml.Marshal(&alertRulesGroup)
 	if err != nil {
-		log.Fatalf("Alert marshalling error: %v", err)
+		return fmt.Errorf("alert marshalling error: %v", err)
 	}
 
 	err = ioutil.WriteFile(filePath, data, 0644)
 	if err != nil {
-		log.Fatalf("Output error: %v", err)
+		return fmt.Errorf("output error: %v", err)
 	}
 
 	return err
