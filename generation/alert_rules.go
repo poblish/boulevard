@@ -64,7 +64,7 @@ func (rg *RuleGenerator) postProcess(filePath string, metricPrefix string, multi
 		}
 
 		var normalisedMetricName string
-		if false { // FXIME dg.caseSensitiveMetricNames {
+		if false { // FIXME dg.caseSensitiveMetricNames {
 			normalisedMetricName = normalizer.Replace(ruleProps["errorLabel"])
 		} else {
 			normalisedMetricName = normaliseAndLowercaseName(ruleProps["errorLabel"])
@@ -92,7 +92,12 @@ func (rg *RuleGenerator) postProcess(filePath string, metricPrefix string, multi
 		annotations["description"] = ruleProps["description"]
 		annotations["summary"] = ruleProps["summary"] // FIXME use desc if blank
 
-		alertEntries[i] = AlertRuleOutput{Alert: alertName, Expr: eachRule.alertRuleExpression(metricPrefix), Duration: ruleProps["duration"], Labels: labels, Annotations: annotations}
+		expr, err := eachRule.alertRuleExpression(metricPrefix)
+		if err != nil {
+			return err
+		}
+
+		alertEntries[i] = AlertRuleOutput{Alert: alertName, Expr: expr, Duration: ruleProps["duration"], Labels: labels, Annotations: annotations}
 	}
 
 	alertRulesGroup := AlertRulesGroup{Name: displayPrefix + " auto-generated alerts", Rules: alertEntries}

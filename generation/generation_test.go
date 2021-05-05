@@ -120,6 +120,59 @@ func TestGrafanaDashboardGeneration(t *testing.T) {
 	assert.Contains(t, data, `"targets": [{"expr": "avg(prefix_t{quantile=~\"0.5|0.75|0.9|0.99\"}) by (quantile)", "format": "time_series", "intervalFactor": 1, "refId": "A"}],`)
 }
 
+func TestInvalidErrorLabelAnnotation(t *testing.T) {
+	loadedPkgs, err := packages.Load(&scanConf, "github.com/poblish/boulevard/generation/test/a")
+	assert.NoError(t, err)
+
+	generator := &DashboardGenerator{}
+	metrics, _ := generator.DiscoverMetrics(loadedPkgs)
+	assert.Equal(t, len(metrics), 1)
+
+	names := make([]string, len(metrics))
+	for i, each := range metrics {
+		names[i] = each.FullMetricName
+	}
+
+	assert.Equal(t, names, []string{"prefix_not_e"})
+
+	tempFile, err := ioutil.TempFile("", "x*.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	err = generator.GenerateAlertRules(tempFile.Name(), metrics)
+	assert.Contains(t, err.Error(), "alert refers to missing metric prefix_e")
+}
+
+func TestMultipleDefaultsAnnotations(t *testing.T) {
+	loadedPkgs, err := packages.Load(&scanConf, "github.com/poblish/boulevard/generation/test/b")
+	assert.NoError(t, err)
+
+	generator := &DashboardGenerator{}
+	_, err = generator.DiscoverMetrics(loadedPkgs)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "only one @AlertDefaults allowed per project")
+}
+
+func TestBadErrorRateAnnotations(t *testing.T) {
+	loadedPkgs, err := packages.Load(&scanConf, "github.com/poblish/boulevard/generation/test/c")
+	assert.NoError(t, err)
+
+	generator := &DashboardGenerator{}
+	metrics, _ := generator.DiscoverMetrics(loadedPkgs)
+
+	tempFile, err := ioutil.TempFile("", "x*.yaml")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer os.Remove(tempFile.Name())
+
+	err = generator.GenerateAlertRules(tempFile.Name(), metrics)
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "bad ratePerSecondThreshold: strconv.ParseFloat: parsing \"\": invalid syntax")
+}
+
 /*
 	Metric names should be fully qualified (include prefix) if more than one Promenade metrics object / more than one prefix is in use
    	@AlertDefaults(displayPrefix = Application, severity = warning, team = myTeam)

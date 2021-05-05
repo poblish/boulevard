@@ -1,7 +1,7 @@
 package generation
 
 import (
-	"log"
+	"fmt"
 	"strconv"
 )
 
@@ -13,7 +13,7 @@ type AlertDefaults struct {
 
 type AlertRule interface {
 	properties() map[string]string
-	alertRuleExpression(metricPrefix string) string
+	alertRuleExpression(metricPrefix string) (string, error)
 }
 
 type ZeroToleranceErrorAlertRule struct {
@@ -25,8 +25,8 @@ func (r ZeroToleranceErrorAlertRule) properties() map[string]string {
 	return r.props
 }
 
-func (r ZeroToleranceErrorAlertRule) alertRuleExpression(metricPrefix string) string {
-	return "sum(rate(" + metricPrefix + "errors{error_type='" + r.props["errorLabel"] + "'}[" + r.props["timeRange"] + "])) > 0"
+func (r ZeroToleranceErrorAlertRule) alertRuleExpression(metricPrefix string) (string, error) {
+	return "sum(rate(" + metricPrefix + "errors{error_type='" + r.props["errorLabel"] + "'}[" + r.props["timeRange"] + "])) > 0", nil
 }
 
 type ElevatedErrorRateAlertRule struct {
@@ -38,14 +38,14 @@ func (r ElevatedErrorRateAlertRule) properties() map[string]string {
 	return r.props
 }
 
-func (r ElevatedErrorRateAlertRule) alertRuleExpression(metricPrefix string) string {
+func (r ElevatedErrorRateAlertRule) alertRuleExpression(metricPrefix string) (string, error) {
 	unvalidatedRate := r.props["ratePerSecondThreshold"]
 	_, err := strconv.ParseFloat(unvalidatedRate, 64)
 	if err != nil {
-		log.Fatalf("Bad ratePerSecondThreshold: %v", err)
+		return "", fmt.Errorf("bad ratePerSecondThreshold: %v", err)
 	}
 
-	return "sum(rate(" + metricPrefix + "errors{error_type='" + r.props["errorLabel"] + "'}[" + r.props["timeRange"] + "])) > " + unvalidatedRate
+	return "sum(rate(" + metricPrefix + "errors{error_type='" + r.props["errorLabel"] + "'}[" + r.props["timeRange"] + "])) > " + unvalidatedRate, nil
 }
 
 // ====================================================================================
