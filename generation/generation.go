@@ -21,11 +21,13 @@ type DashboardGenerator struct {
 	caseSensitiveMetricNames bool
 	alreadyGotErrors         bool
 	foundMetricsObject       bool
+	numPrefixesConfigured    int
+	metricsIntercepted       map[string]bool
 }
 
 var globalIncrementingPanelId int
 
-func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
+func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) []*metric {
 	nodeFilter := []ast.Node{(*ast.CommentGroup)(nil), (*ast.CallExpr)(nil)}
 
 	metrics := []*metric{}
@@ -35,8 +37,7 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 	dg.caseSensitiveMetricNames = false
 	dg.alreadyGotErrors = false
 	dg.foundMetricsObject = false
-
-	numPrefixesConfigured := 0
+	dg.numPrefixesConfigured = 0
 
 	for _, eachPkg := range loadedPkgs {
 		fmt.Println(">> Examining", eachPkg.PkgPath)
@@ -89,7 +90,7 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 									dg.currentMetricPrefix += rawPrefixSeparator
 								}
 
-								numPrefixesConfigured++
+								dg.numPrefixesConfigured++
 							}
 						}
 					} else if subExpr, ok := mthd.X.(*ast.SelectorExpr); ok /* Nested calls like `defer x.Timer()` */ {
@@ -118,22 +119,26 @@ func (dg *DashboardGenerator) Run(loadedPkgs []*packages.Package) error {
 	}
 
 	// Complete...
-	metricsIntercepted := make(map[string]bool)
+	dg.metricsIntercepted = make(map[string]bool)
 
 	for _, eachMetric := range metrics {
 		eachMetric.MetricsPrefix = dg.currentMetricPrefix
 		eachMetric.FullMetricName = dg.currentMetricPrefix + eachMetric.normalisedMetricName
 
 		// Met this *full* name before?
-		if _, ok := metricsIntercepted[eachMetric.FullMetricName]; ok {
+		if _, ok := dg.metricsIntercepted[eachMetric.FullMetricName]; ok {
 			continue
 		}
-		metricsIntercepted[eachMetric.FullMetricName] = true
+		dg.metricsIntercepted[eachMetric.FullMetricName] = true
 
 		fmt.Println(eachMetric.metricCall, "=>", eachMetric.FullMetricName)
 	}
 
-	dg.RuleGenerator.postProcess(dg.currentMetricPrefix, numPrefixesConfigured > 1, dg.rawMetricPrefix, metricsIntercepted)
+	return metrics
+}
+
+func (dg *DashboardGenerator) Generate(metrics []*metric) error {
+	dg.RuleGenerator.postProcess(dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.rawMetricPrefix, dg.metricsIntercepted)
 
 	// tmpl := template.Must(template.ParseGlob("/Users/andrewregan/Development/Go\\ work/promenade/templates/dashboard.json"))
 

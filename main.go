@@ -27,7 +27,9 @@ func main() {
 	}
 
 	generator := &generation.DashboardGenerator{}
-	err = generator.Run(loadedPkgs)
+	metrics := generator.DiscoverMetrics(loadedPkgs)
+
+	err = generator.Generate(metrics)
 	if err != nil {
 		log.Fatalf("Run failed %s", err)
 	}
