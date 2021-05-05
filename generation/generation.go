@@ -96,7 +96,7 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) []
 					} else if subExpr, ok := mthd.X.(*ast.SelectorExpr); ok /* Nested calls like `defer x.Timer()` */ {
 						subExprTypeName := eachPkg.TypesInfo.Types[subExpr].Type.String()
 
-						if strings.HasSuffix(subExprTypeName, PromenadePkg) && mthd.Sel.Name != "TestHelper" {
+						if strings.HasSuffix(subExprTypeName, PromenadePkg) {
 							metricName := stripQuotes(stmt.Args[0].(*ast.BasicLit).Value)
 
 							newMetric := dg.interceptMetric(mthd.Sel.Name, metricName, stmt.Args)
