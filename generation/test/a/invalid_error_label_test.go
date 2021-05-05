@@ -7,7 +7,7 @@ import (
 /*
 	@ZeroToleranceErrorAlertRule(name = calcError, errorLabel="e", severity = pager, summary = Calculation error, description = "A calculation failed unexpectedly")
 */
-func invalidErrorLabelAnnotation() { // Is used!!
+func _() { // Is used!!
 	metrics := promenade.NewMetrics(promenade.MetricOpts{MetricNamePrefix: "prefix"})
 	metrics.Error("not_e")
 }

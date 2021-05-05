@@ -30,7 +30,7 @@ var globalIncrementingPanelId int
 func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([]*metric, error) {
 	nodeFilter := []ast.Node{(*ast.CommentGroup)(nil), (*ast.CallExpr)(nil)}
 
-	metrics := []*metric{}
+	var metrics []*metric
 
 	dg.rawMetricPrefix = ""
 	dg.currentMetricPrefix = ""
@@ -145,7 +145,7 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 	return metrics, nil
 }
 
-func (dg *DashboardGenerator) GenerateAlertRules(filePath string, metrics []*metric) error {
+func (dg *DashboardGenerator) GenerateAlertRules(filePath string) error {
 	return dg.RuleGenerator.postProcess(filePath, dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.rawMetricPrefix, dg.metricsIntercepted)
 }
 
@@ -174,9 +174,7 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(filePath string, metrics 
 		log.Fatalf("template execution: %s", tErr)
 	}
 
-	outputFile.Close()
-
-	return tErr
+	return outputFile.Close()
 }
 
 func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName string, metricCallArgs []ast.Expr) *metric {

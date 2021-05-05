@@ -77,15 +77,17 @@ func TestAlertRuleGeneration(t *testing.T) {
 	assert.NoError(t, err)
 
 	generator := &DashboardGenerator{}
-	metrics, _ := generator.DiscoverMetrics(loadedPkgs)
+	_, _ = generator.DiscoverMetrics(loadedPkgs)
 
 	tempFile, err := ioutil.TempFile("", "x*.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	//goland:noinspection GoUnhandledErrorResult
 	defer os.Remove(tempFile.Name())
 
-	err = generator.GenerateAlertRules(tempFile.Name(), metrics)
+	err = generator.GenerateAlertRules(tempFile.Name())
 	assert.NoError(t, err)
 	assert.FileExists(t, tempFile.Name())
 
@@ -104,6 +106,8 @@ func TestGrafanaDashboardGeneration(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	//goland:noinspection GoUnhandledErrorResult
 	defer os.Remove(tempFile.Name())
 
 	err = generator.GenerateGrafanaDashboard(tempFile.Name(), metrics)
@@ -139,9 +143,12 @@ func TestInvalidErrorLabelAnnotation(t *testing.T) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	//goland:noinspection GoUnhandledErrorResult
 	defer os.Remove(tempFile.Name())
 
-	err = generator.GenerateAlertRules(tempFile.Name(), metrics)
+	err = generator.GenerateAlertRules(tempFile.Name())
+	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "alert refers to missing metric prefix_e")
 }
 
@@ -160,15 +167,16 @@ func TestBadErrorRateAnnotations(t *testing.T) {
 	assert.NoError(t, err)
 
 	generator := &DashboardGenerator{}
-	metrics, _ := generator.DiscoverMetrics(loadedPkgs)
+	_, _ = generator.DiscoverMetrics(loadedPkgs)
 
 	tempFile, err := ioutil.TempFile("", "x*.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
+	//goland:noinspection ALL
 	defer os.Remove(tempFile.Name())
 
-	err = generator.GenerateAlertRules(tempFile.Name(), metrics)
+	err = generator.GenerateAlertRules(tempFile.Name())
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "bad ratePerSecondThreshold: strconv.ParseFloat: parsing \"\": invalid syntax")
 }
@@ -179,6 +187,7 @@ func TestBadErrorRateAnnotations(t *testing.T) {
 	@ZeroToleranceErrorAlertRule(name = calcError, errorLabel="e", severity = pager, summary = Calculation error, description = "A calculation failed unexpectedly")
 	@ElevatedErrorRateAlertRule(name = calcProblems, errorLabel="e", timeRange=10m, ratePerSecondThreshold=1, summary = More errors, description = "Too high error rate")
 */
+//goland:noinspection GoUnusedFunction
 func sampleMetricUsage() { // Is used!!
 	metrics := promenade.NewMetrics(promenade.MetricOpts{MetricNamePrefix: "prefix"})
 	metrics.Counter("c").Inc()

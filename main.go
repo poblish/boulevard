@@ -33,7 +33,7 @@ func main() {
 	}
 
 	// FIXME Hardcoded name
-	err = generator.GenerateAlertRules("alert_rules.yaml", metrics)
+	err = generator.GenerateAlertRules("alert_rules.yaml")
 	if err != nil {
 		log.Fatalf("Alert rule generation failed %s", err)
 	}
