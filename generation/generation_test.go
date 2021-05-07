@@ -221,13 +221,15 @@ func TestBadErrorRateAnnotations(t *testing.T) {
 func sampleMetricUsage() { // Is used!!
 	metrics := promenade.NewMetrics(promenade.MetricOpts{MetricNamePrefix: "prefix"})
 	metrics.Counter("c").Inc()
+	metrics.Counter("c").Inc()
 	metrics.CounterWithLabel("places", "city").IncLabel("London")
 	metrics.CounterWithLabels("animals", []string{"type", "breed"}).IncLabel("cat", "persian")
 	metrics.Error("e")
 	metrics.Gauge("g")
 	metrics.HistogramForResponseTime("h")
 	metrics.Histogram("hb", []float64{1, 10})
-	metrics.Summary("s")
+	metrics.Summary("s").Observe(1212)
+	metrics.Summary("s").Observe(233)
 	timedMethod(&metrics)
 
 	fmt.Println(metrics.TestHelper().MetricNames())

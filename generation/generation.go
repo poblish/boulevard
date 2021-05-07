@@ -127,6 +127,8 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 	// Complete...
 	dg.metricsIntercepted = make(map[string]bool)
 
+	filteredIdx := 0
+
 	for _, eachMetric := range metrics {
 		eachMetric.MetricsPrefix = dg.currentMetricPrefix
 		eachMetric.FullMetricName = dg.currentMetricPrefix + eachMetric.normalisedMetricName
@@ -135,10 +137,21 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 		if _, ok := dg.metricsIntercepted[eachMetric.FullMetricName]; ok {
 			continue
 		}
+
+		// Replace filtered item
+		metrics[filteredIdx] = eachMetric
+		filteredIdx++
+
 		dg.metricsIntercepted[eachMetric.FullMetricName] = true
 
 		// fmt.Println(eachMetric.metricCall, "=>", eachMetric.FullMetricName)
 	}
+
+	// Remove crud from the end of the slice
+	for j := filteredIdx; j < len(metrics); j++ {
+		metrics[j] = nil
+	}
+	metrics = metrics[:filteredIdx]
 
 	fmt.Println(len(dg.metricsIntercepted), "metrics discovered")
 
