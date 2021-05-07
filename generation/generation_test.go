@@ -32,21 +32,51 @@ func TestBasic(t *testing.T) {
 		names[i] = each.FullMetricName
 	}
 
-	assert.Equal(t, names, []string{"prefix_c", "prefix_places", "prefix_animals", "prefix_e", "prefix_g", "prefix_h", "prefix_hb", "prefix_s", "prefix_t"})
+	assert.Equal(t, []string{"prefix_c", "prefix_places", "prefix_animals", "prefix_e", "prefix_g", "prefix_h", "prefix_hb", "prefix_s", "prefix_t"}, names)
 
 	labels := make([]string, len(metrics))
 	for i, each := range metrics {
 		labels[i] = each.MetricLabels
 	}
 
-	assert.Equal(t, labels, []string{"", " by (city)", " by (type,breed)", "", "", "", "", "", ""})
+	assert.Equal(t, []string{"", " by (city)", " by (type,breed)", "", "", "", "", "", ""}, labels)
 
 	panelTitles := make([]string, len(metrics))
 	for i, each := range metrics {
 		panelTitles[i] = each.PanelTitle
 	}
 
-	assert.Equal(t, panelTitles, []string{"c", "places", "animals", "e", "g", "h", "hb", "s", "t"})
+	assert.Equal(t, []string{"c", "places", "animals", "e", "g", "h", "hb", "s", "t"}, panelTitles)
+}
+
+func TestCustomOptions(t *testing.T) {
+	loadedPkgs, err := packages.Load(&scanConf, "github.com/poblish/boulevard/generation/test/d")
+	assert.NoError(t, err)
+
+	generator := &DashboardGenerator{}
+	metrics, _ := generator.DiscoverMetrics(loadedPkgs)
+	assert.Equal(t, len(metrics), 5)
+
+	names := make([]string, len(metrics))
+	for i, each := range metrics {
+		names[i] = each.FullMetricName
+	}
+
+	assert.Equal(t, []string{"prefix:c", "prefix:places", "prefix:animals", "prefix:e", "prefix:g"}, names)
+
+	labels := make([]string, len(metrics))
+	for i, each := range metrics {
+		labels[i] = each.MetricLabels
+	}
+
+	assert.Equal(t, []string{"", " by (city)", " by (type,breed)", "", ""}, labels)
+
+	panelTitles := make([]string, len(metrics))
+	for i, each := range metrics {
+		panelTitles[i] = each.PanelTitle
+	}
+
+	assert.Equal(t, []string{"c", "places", "animals", "e", "g"}, panelTitles)
 }
 
 var expectedOutput = `
