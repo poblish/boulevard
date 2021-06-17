@@ -76,11 +76,21 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 								// Parse the single argument to NewMetrics, deconstruct the Opts
 								for _, elt := range stmt.Args[0].(*ast.CompositeLit).Elts {
 									if kv, ok := elt.(*ast.KeyValueExpr); ok {
+
+										var literalValue string
+										switch value := kv.Value.(type) {
+										case *ast.BasicLit:
+											literalValue = value.Value
+										case *ast.Ident:
+											// dereference the Ident...
+											literalValue = eachPkg.TypesInfo.Types[value].Value.String()
+										}
+
 										switch kv.Key.(*ast.Ident).Name {
 										case "MetricNamePrefix":
-											dg.rawMetricPrefix = stripQuotes(kv.Value.(*ast.BasicLit).Value)
+											dg.rawMetricPrefix = stripQuotes(literalValue)
 										case "PrefixSeparator":
-											rawPrefixSeparator = stripQuotes(kv.Value.(*ast.BasicLit).Value)
+											rawPrefixSeparator = stripQuotes(literalValue)
 										case "CaseSensitiveMetricNames":
 											dg.caseSensitiveMetricNames = true
 										}
