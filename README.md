@@ -47,7 +47,7 @@ $ go get -v github.com/poblish/boulevard
 
 ````bash
 $ cd example
-$ boulevard   ## optional --pkg github.com/my/pkg --pkg ...
+$ boulevard   ## optional --pkg github.com/my/pkg --rulesOutputPath rules/alert_rules.yaml --dashboardOutputPath dashboards/grafana_dashboard.json
 
 {
   "annotations": {

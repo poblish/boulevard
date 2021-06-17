@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"go/ast"
 	"io/ioutil"
+	"log"
+	"os"
+	"path/filepath"
 	"strings"
 
 	"gopkg.in/yaml.v2"
@@ -35,7 +38,7 @@ func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup)
 	return nil
 }
 
-func (rg *RuleGenerator) postProcess(filePath string, metricPrefix string, multiplePrefixesFound bool, defaultDisplayPrefix string, fqnsInUse map[string]bool) error {
+func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, multiplePrefixesFound bool, defaultDisplayPrefix string, fqnsInUse map[string]bool) error {
 	alertEntries := make([]AlertRuleOutput, len(rg.alertRules))
 
 	var displayPrefix string
@@ -107,7 +110,11 @@ func (rg *RuleGenerator) postProcess(filePath string, metricPrefix string, multi
 		return fmt.Errorf("alert marshalling error: %v", err)
 	}
 
-	err = ioutil.WriteFile(filePath, data, 0644)
+	if err := os.MkdirAll(filepath.Dir(destFilePath), os.ModePerm); err != nil {
+		log.Fatalf("Output directory creation failed: %s", err)
+	}
+
+	err = ioutil.WriteFile(destFilePath, data, 0644)
 	if err != nil {
 		return fmt.Errorf("output error: %v", err)
 	}

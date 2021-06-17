@@ -11,9 +11,13 @@ import (
 type packagesList []string
 
 var packageFlags packagesList
+var rulesOutputPath string
+var dashboardOutputPath string
 
 func main() {
 	flag.Var(&packageFlags, "pkg", "Packages to scan")
+	flag.StringVar(&rulesOutputPath, "rulesOutputPath", "alert_rules.yaml", "Rules output path")
+	flag.StringVar(&dashboardOutputPath, "dashboardOutputPath", "grafana_dashboard.json", "Dashboard output path")
 	flag.Parse()
 
 	conf := packages.Config{
@@ -33,13 +37,13 @@ func main() {
 	}
 
 	// FIXME Hardcoded name
-	err = generator.GenerateAlertRules("alert_rules.yaml")
+	err = generator.GenerateAlertRules(rulesOutputPath)
 	if err != nil {
 		log.Fatalf("Alert rule generation failed %s", err)
 	}
 
 	// FIXME Hardcoded name
-	err = generator.GenerateGrafanaDashboard("grafana_dashboard.json", metrics)
+	err = generator.GenerateGrafanaDashboard(dashboardOutputPath, metrics)
 	if err != nil {
 		log.Fatalf("Generation failed %s", err)
 	}

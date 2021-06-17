@@ -5,6 +5,7 @@ import (
 	"go/ast"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 	"text/template"
 
@@ -172,7 +173,7 @@ func (dg *DashboardGenerator) GenerateAlertRules(filePath string) error {
 	return dg.RuleGenerator.postProcess(filePath, dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.rawMetricPrefix, dg.metricsIntercepted)
 }
 
-func (dg *DashboardGenerator) GenerateGrafanaDashboard(filePath string, metrics []*metric) error {
+func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metrics []*metric) error {
 	// tmpl := template.Must(template.ParseGlob("/Users/andrewregan/Development/Go\\ work/promenade/templates/dashboard.json"))
 
 	tmpl, _ := template.New("default").Funcs(template.FuncMap{
@@ -187,7 +188,11 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(filePath string, metrics 
 		},
 	}).Parse(DefaultDashboardTemplate)
 
-	outputFile, err := os.Create(filePath)
+	if err := os.MkdirAll(filepath.Dir(destFilePath), os.ModePerm); err != nil {
+		log.Fatalf("Output directory creation failed: %s", err)
+	}
+
+	outputFile, err := os.Create(destFilePath)
 	if err != nil {
 		log.Fatalf("Output file creation failed: %s", err)
 	}
