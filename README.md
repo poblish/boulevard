@@ -1,6 +1,6 @@
 # Boulevard
 
-[![Build Status](https://travis-ci.org/poblish/boulevard.svg?branch=master)](https://travis-ci.org/poblish/boulevard)
+[![Build Status](https://travis-ci.com/poblish/boulevard.svg?branch=master)](https://travis-ci.com/poblish/boulevard)
 [![codecov](https://codecov.io/gh/poblish/boulevard/branch/master/graph/badge.svg?token=sgcOWUtDqa)](https://codecov.io/gh/poblish/boulevard)
 
 Auto-generate Grafana dashboards and Prometheus alert rules via static analysis from usage of the [Promenade](https://github.com/poblish/promenade) Golang Prometheus client.
