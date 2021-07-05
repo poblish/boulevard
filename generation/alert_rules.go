@@ -114,7 +114,7 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 		log.Fatalf("Output directory creation failed: %s", err)
 	}
 
-	fmt.Println("Writing alert rules to", friendlyFileName(destFilePath))
+	fmt.Println("Writing alert rules to", FriendlyFileName(destFilePath))
 
 	err = ioutil.WriteFile(destFilePath, data, 0644)
 	if err != nil {

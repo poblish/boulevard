@@ -10,7 +10,7 @@ import (
 var userHome, _ = os.UserHomeDir()
 var userDir, _ = os.Getwd()
 
-func friendlyFileName(path string) string {
+func FriendlyFileName(path string) string {
 	abs, err := filepath.Abs(path)
 	if err != nil {
 		log.Fatalf("Couldn't get absolute path %s", err)
