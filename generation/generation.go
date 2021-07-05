@@ -197,6 +197,8 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 		log.Fatalf("Output file creation failed: %s", err)
 	}
 
+	fmt.Println("Writing dashboard to", friendlyFileName(destFilePath))
+
 	tErr := tmpl.Execute(outputFile, &dashboardData{Metrics: metrics, Title: "MyTitle", Id: "MyId"})
 	if tErr != nil {
 		log.Fatalf("template execution: %s", tErr)
