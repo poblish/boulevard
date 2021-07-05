@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"os"
 
 	"github.com/poblish/boulevard/generation"
 	"golang.org/x/tools/go/packages"
@@ -13,14 +14,22 @@ type packagesList []string
 var packageFlags packagesList
 var rulesOutputPath string
 var dashboardOutputPath string
+var sourcePath string
 
 func main() {
+	currentDir, err := os.Getwd()
+	if err == nil {
+		currentDir = "."
+	}
+
 	flag.Var(&packageFlags, "pkg", "Packages to scan")
+	flag.StringVar(&sourcePath, "sourcePath", currentDir, "Source path")
 	flag.StringVar(&rulesOutputPath, "rulesOutputPath", "alert_rules.yaml", "Rules output path")
 	flag.StringVar(&dashboardOutputPath, "dashboardOutputPath", "grafana_dashboard.json", "Dashboard output path")
 	flag.Parse()
 
 	conf := packages.Config{
+		Dir: sourcePath,
 		Mode:  packages.NeedName | packages.NeedTypes | packages.NeedSyntax | packages.NeedTypesInfo,
 		Tests: false,
 	}
