@@ -157,7 +157,7 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 func (rg *RuleGenerator) parseZeroToleranceErrorAlertRule(comment string) {
 	props := make(map[string]string)
 	props["timeRange"] = "1m"
-	props["duration"] = "1m"
+	props["duration"] = "10s" // FIXME make configurable
 
 	parsePayload(comment, props)
 
