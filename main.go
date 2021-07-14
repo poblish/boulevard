@@ -17,9 +17,11 @@ type packagesList []string
 
 var packageFlags packagesList
 var rulesOutputPath string
+var rulesOutputFormat string
 var dashboardOutputPath string
 var sourcePath string
 
+var alertManagerOutputFormat = "alertManager"
 var defaultRulesOutputFileName = "alert_rules.yaml"
 var defaultGrafanaDashboardFileName = "grafana_dashboard.json"
 
@@ -42,6 +44,7 @@ func main() {
 	flag.Var(&packageFlags, "pkg", "Packages to scan")
 	flag.StringVar(&sourcePath, "sourcePath", "", "Source path")
 	flag.StringVar(&rulesOutputPath, "rulesOutputPath", "", "Rules output path")
+	flag.StringVar(&rulesOutputFormat, "rulesOutputFormat", "", "Rules output format")
 	flag.StringVar(&dashboardOutputPath, "dashboardOutputPath", "", "Dashboard output path")
 	flag.Parse()
 
@@ -73,6 +76,24 @@ func main() {
 		packageFlags = []string{state.DefaultPkg}
 	}
 
+	if rulesOutputFormat == "" {
+		if state.RulesOutputFormat != "" {
+			rulesOutputFormat = state.RulesOutputFormat
+		} else {
+			rulesOutputPath = alertManagerOutputFormat
+		}
+	}
+
+	var alertRuleFormat int
+	switch rulesOutputFormat {
+	case alertManagerOutputFormat:
+		alertRuleFormat = generation.PrometheusAlertManagerFormat
+	case "operator":
+		alertRuleFormat = generation.PrometheusOperatorFormat
+	default:
+		log.Fatalf("Unsupported rules output format %s", rulesOutputFormat)
+	}
+
 	fmt.Printf("Examining packages %v from repository dir: %s\n", packageFlags, generation.FriendlyFileName(sourcePath))
 
 	////////////////////////////////////////////
@@ -95,7 +116,7 @@ func main() {
 	}
 
 	// FIXME Hardcoded name
-	err = generator.GenerateAlertRules(rulesOutputPath, generation.OutputOptions{AlertRuleFormat: generation.PrometheusAlertManagerFormat})
+	err = generator.GenerateAlertRules(rulesOutputPath, generation.OutputOptions{AlertRuleFormat: alertRuleFormat})
 	if err != nil {
 		log.Fatalf("Alert rule generation failed %s", err)
 	}
@@ -120,4 +141,5 @@ type BoulevardState struct {
 	SourcePath        string
 	GeneratedChartDir string
 	DefaultPkg        string
+	RulesOutputFormat string
 }

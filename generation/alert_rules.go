@@ -18,8 +18,8 @@ type RuleGenerator struct {
 }
 
 const (
-	PrometheusAlertManagerFormat = iota << 2
-	PrometheusOperatorFormat     = iota << 2
+	PrometheusAlertManagerFormat = iota
+	PrometheusOperatorFormat
 )
 
 type OutputOptions struct {
@@ -48,7 +48,16 @@ func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup)
 }
 
 func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, multiplePrefixesFound bool, defaultDisplayPrefix string, fqnsInUse map[string]bool, options OutputOptions) error {
-	alertEntries := make([]AlertRuleOutput, len(rg.alertRules))
+
+	var alertEntries []AlertRuleOutput
+	var operatorAlertEntries []PrometheusOperatorAlertRuleOutput
+
+	switch options.AlertRuleFormat {
+	case PrometheusAlertManagerFormat:
+		alertEntries = make([]AlertRuleOutput, len(rg.alertRules))
+	case PrometheusOperatorFormat:
+		operatorAlertEntries = make([]PrometheusOperatorAlertRuleOutput, len(rg.alertRules))
+	}
 
 	var displayPrefix string
 	if rg.defaults != nil && rg.defaults.displayPrefix != "" {
@@ -109,12 +118,24 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 			return err
 		}
 
-		alertEntries[i] = AlertRuleOutput{Alert: alertName, Expr: expr, Duration: ruleProps["duration"], Labels: labels, Annotations: annotations}
+		switch options.AlertRuleFormat {
+		case PrometheusAlertManagerFormat:
+			alertEntries[i] = AlertRuleOutput{Alert: alertName, Expr: expr, Duration: ruleProps["duration"], Labels: labels, Annotations: annotations}
+		case PrometheusOperatorFormat:
+			operatorAlertEntries[i] = PrometheusOperatorAlertRuleOutput{Alert: alertName, Expr: expr, For: ruleProps["duration"], Labels: labels, Annotations: annotations}
+		}
 	}
 
-	alertRulesGroup := AlertRulesGroup{Name: displayPrefix + " auto-generated alerts", Rules: alertEntries}
+	var alertRulesSpec interface{}
 
-	data, err := yaml.Marshal(&alertRulesGroup)
+	switch options.AlertRuleFormat {
+	case PrometheusAlertManagerFormat:
+		alertRulesSpec = AlertRulesGroup{Name: displayPrefix + " auto-generated alerts", Rules: alertEntries}
+	case PrometheusOperatorFormat:
+		alertRulesSpec = PrometheusOperatorRulesSpec{Groups: []PrometheusOperatorAlertRulesGroup{{Name: displayPrefix + " auto-generated alerts", Rules: operatorAlertEntries}}}
+	}
+
+	data, err := yaml.Marshal(&alertRulesSpec)
 	if err != nil {
 		return fmt.Errorf("alert marshalling error: %v", err)
 	}

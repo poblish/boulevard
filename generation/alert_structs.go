@@ -62,3 +62,21 @@ type AlertRuleOutput struct {
 	Labels      map[string]string
 	Annotations map[string]string
 }
+
+// PrometheusOperatorRulesSpec https://github.com/prometheus-operator/prometheus-operator/blob/master/Documentation/api.md#prometheusrulespec
+type PrometheusOperatorRulesSpec struct {
+	Groups []PrometheusOperatorAlertRulesGroup
+}
+
+type PrometheusOperatorAlertRulesGroup struct {
+	Name  string
+	Rules []PrometheusOperatorAlertRuleOutput
+}
+
+type PrometheusOperatorAlertRuleOutput struct {
+	Alert       string
+	Expr        string
+	For         string
+	Labels      map[string]string
+	Annotations map[string]string
+}
