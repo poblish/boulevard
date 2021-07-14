@@ -84,7 +84,7 @@ name: Application auto-generated alerts
 rules:
 - alert: ApplicationCalcError
   expr: sum(rate(prefix_errors{error_type='e'}[1m])) > 0
-  duration: 1m
+  duration: 10s
   labels:
     severity: pager
     team: myTeam
