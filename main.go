@@ -95,7 +95,7 @@ func main() {
 	}
 
 	// FIXME Hardcoded name
-	err = generator.GenerateAlertRules(rulesOutputPath)
+	err = generator.GenerateAlertRules(rulesOutputPath, generation.OutputOptions{AlertRuleFormat: generation.PrometheusAlertManagerFormat})
 	if err != nil {
 		log.Fatalf("Alert rule generation failed %s", err)
 	}

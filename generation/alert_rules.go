@@ -17,6 +17,15 @@ type RuleGenerator struct {
 	alertRules []AlertRule
 }
 
+const (
+	PrometheusAlertManagerFormat = iota << 2
+	PrometheusOperatorFormat     = iota << 2
+)
+
+type OutputOptions struct {
+	AlertRuleFormat int
+}
+
 func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup) error {
 	if commentGroup != nil {
 		for _, comment := range commentGroup.List {
@@ -38,7 +47,7 @@ func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup)
 	return nil
 }
 
-func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, multiplePrefixesFound bool, defaultDisplayPrefix string, fqnsInUse map[string]bool) error {
+func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, multiplePrefixesFound bool, defaultDisplayPrefix string, fqnsInUse map[string]bool, options OutputOptions) error {
 	alertEntries := make([]AlertRuleOutput, len(rg.alertRules))
 
 	var displayPrefix string

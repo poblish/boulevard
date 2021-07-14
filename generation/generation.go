@@ -169,8 +169,8 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 	return metrics, nil
 }
 
-func (dg *DashboardGenerator) GenerateAlertRules(filePath string) error {
-	return dg.RuleGenerator.postProcess(filePath, dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.rawMetricPrefix, dg.metricsIntercepted)
+func (dg *DashboardGenerator) GenerateAlertRules(filePath string, options OutputOptions) error {
+	return dg.RuleGenerator.postProcess(filePath, dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.rawMetricPrefix, dg.metricsIntercepted, options)
 }
 
 func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metrics []*metric) error {
