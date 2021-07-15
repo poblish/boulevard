@@ -199,7 +199,8 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 
 	fmt.Println("Writing dashboard to", FriendlyFileName(destFilePath))
 
-	tErr := tmpl.Execute(outputFile, &dashboardData{Metrics: metrics, Title: "MyTitle", Id: "MyId"})
+	uid := truncateText(dg.currentMetricPrefix+"generated", 40)
+	tErr := tmpl.Execute(outputFile, &dashboardData{Metrics: metrics, Title: dg.rawMetricPrefix + " Visualised Metrics", Id: uid})
 	if tErr != nil {
 		log.Fatalf("template execution: %s", tErr)
 	}
@@ -293,4 +294,11 @@ func stripQuotes(s string) string {
 		s = s[:len(s)-1]
 	}
 	return strings.TrimSpace(s)
+}
+
+func truncateText(s string, max int) string {
+	if max > len(s) {
+		return s
+	}
+	return s[:strings.LastIndexAny(s[:max], " .,:;-")]
 }
