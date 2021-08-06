@@ -115,6 +115,10 @@ func main() {
 		log.Fatalf("Metrics discovery failed %s", err)
 	}
 
+	if len(metrics) < 1 {
+		return // nothing to do
+	}
+
 	// FIXME Hardcoded name
 	err = generator.GenerateAlertRules(rulesOutputPath, generation.OutputOptions{AlertRuleFormat: alertRuleFormat})
 	if err != nil {

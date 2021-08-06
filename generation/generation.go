@@ -132,7 +132,8 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 	}
 
 	if len(metrics) < 1 {
-		log.Fatalf("No Promenade metrics found")
+		log.Printf("No Promenade metrics found")
+		return metrics, nil
 	}
 
 	// Complete...
