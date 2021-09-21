@@ -274,12 +274,15 @@ func (dg *DashboardGenerator) discoverMetricOptions(pkg *packages.Package, stmt 
 }
 
 func (dg *DashboardGenerator) handleDiscoveredPrefix(separator string) {
-	dg.currentMetricPrefix = normaliseAndLowercaseName(dg.rawMetricPrefix)
-	if dg.currentMetricPrefix != "" && !strings.HasSuffix(dg.currentMetricPrefix, separator) {
-		dg.currentMetricPrefix += separator
+	newMetricPrefix := normaliseAndLowercaseName(dg.rawMetricPrefix)
+	if newMetricPrefix != "" && !strings.HasSuffix(newMetricPrefix, separator) {
+		newMetricPrefix += separator
 	}
 
-	dg.numPrefixesConfigured++
+	if dg.currentMetricPrefix != newMetricPrefix {
+		dg.currentMetricPrefix = newMetricPrefix
+		dg.numPrefixesConfigured++
+	}
 }
 
 type dashboardData struct {
