@@ -29,7 +29,7 @@ type DashboardGenerator struct {
 var globalIncrementingPanelId int
 
 func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([]*metric, error) {
-	nodeFilter := []ast.Node{(*ast.CommentGroup)(nil), (*ast.CallExpr)(nil)}
+	nodeFilter := []ast.Node{(*ast.CommentGroup)(nil), (*ast.CompositeLit)(nil), (*ast.CallExpr)(nil)}
 
 	var metrics []*metric
 
@@ -49,6 +49,14 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 			switch stmt := node.(type) {
 			case *ast.CommentGroup:
 				err = dg.processAlertAnnotations(stmt)
+
+			case *ast.CompositeLit:
+				// Discover... metricsOpts := promApi.MetricOpts{MetricNamePrefix: serviceName,} \n metrics := promApi.NewMetrics(metricsOpts)
+				nodeType := eachPkg.TypesInfo.TypeOf(stmt)
+				if nodeType.String() == "github.com/poblish/promenade/api.MetricOpts" {
+					dg.discoverMetricOptions(eachPkg, stmt)
+				}
+
 			case *ast.CallExpr:
 
 				if mthd, ok := stmt.Fun.(*ast.SelectorExpr); ok {
@@ -69,41 +77,11 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 							statementType := eachPkg.TypesInfo.Types[stmt].Type
 
 							if mthd.Sel.Name == "NewMetrics" && statementType != nil && statementType.String() == PromenadePkg {
-
-								dg.foundMetricsObject = true
-
-								rawPrefixSeparator := "_" // as per Prometheus lib standard
-
 								// Parse the single argument to NewMetrics, deconstruct the Opts
-								for _, elt := range stmt.Args[0].(*ast.CompositeLit).Elts {
-									if kv, ok := elt.(*ast.KeyValueExpr); ok {
-
-										var literalValue string
-										switch value := kv.Value.(type) {
-										case *ast.BasicLit:
-											literalValue = value.Value
-										case *ast.Ident:
-											// dereference the Ident...
-											literalValue = eachPkg.TypesInfo.Types[value].Value.String()
-										}
-
-										switch kv.Key.(*ast.Ident).Name {
-										case "MetricNamePrefix":
-											dg.rawMetricPrefix = stripQuotes(literalValue)
-										case "PrefixSeparator":
-											rawPrefixSeparator = stripQuotes(literalValue)
-										case "CaseSensitiveMetricNames":
-											dg.caseSensitiveMetricNames = true
-										}
-									}
+								switch firstArg := stmt.Args[0].(type) {
+								case *ast.CompositeLit:
+									dg.discoverMetricOptions(eachPkg, firstArg)
 								}
-
-								dg.currentMetricPrefix = normaliseAndLowercaseName(dg.rawMetricPrefix)
-								if dg.currentMetricPrefix != "" && !strings.HasSuffix(dg.currentMetricPrefix, rawPrefixSeparator) {
-									dg.currentMetricPrefix += rawPrefixSeparator
-								}
-
-								dg.numPrefixesConfigured++
 							}
 						}
 					} else if subExpr, ok := mthd.X.(*ast.SelectorExpr); ok /* Nested calls like `defer x.Timer()` */ {
@@ -262,6 +240,46 @@ func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName stri
 	}
 
 	return &metric{metricCall: metricCall, normalisedMetricName: normalisedMetricName, PanelTitle: metricName, MetricType: metricType, MetricLabels: metricLabelString}
+}
+
+func (dg *DashboardGenerator) discoverMetricOptions(pkg *packages.Package, stmt *ast.CompositeLit) {
+	dg.foundMetricsObject = true
+
+	rawPrefixSeparator := "_" // as per Prometheus lib standard
+
+	for _, elt := range stmt.Elts {
+		if kv, ok := elt.(*ast.KeyValueExpr); ok {
+
+			var literalValue string
+			switch value := kv.Value.(type) {
+			case *ast.BasicLit:
+				literalValue = value.Value
+			case *ast.Ident:
+				// dereference the Ident...
+				literalValue = pkg.TypesInfo.Types[value].Value.String()
+			}
+
+			switch kv.Key.(*ast.Ident).Name {
+			case "MetricNamePrefix":
+				dg.rawMetricPrefix = stripQuotes(literalValue)
+			case "PrefixSeparator":
+				rawPrefixSeparator = stripQuotes(literalValue)
+			case "CaseSensitiveMetricNames":
+				dg.caseSensitiveMetricNames = true
+			}
+		}
+	}
+
+	dg.handleDiscoveredPrefix(rawPrefixSeparator)
+}
+
+func (dg *DashboardGenerator) handleDiscoveredPrefix(separator string) {
+	dg.currentMetricPrefix = normaliseAndLowercaseName(dg.rawMetricPrefix)
+	if dg.currentMetricPrefix != "" && !strings.HasSuffix(dg.currentMetricPrefix, separator) {
+		dg.currentMetricPrefix += separator
+	}
+
+	dg.numPrefixesConfigured++
 }
 
 type dashboardData struct {
