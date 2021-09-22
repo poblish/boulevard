@@ -114,7 +114,7 @@ const DefaultDashboardTemplate = `{{define "counter_gauge_cumulative"}}
   "seriesOverrides": [],
   "spaceLength": 10,
   "stack": false,
-  "targets": [{"expr": "avg({{ .FullMetricName }}{quantile=~\"0.5|0.75|0.9|0.99\"}) by (quantile)", "format": "time_series", "intervalFactor": 1, "refId": "A"}],
+  "targets": [{"expr": "avg({{ .FullMetricName }}{quantile=~\"0.5|0.75|0.9|0.99\"}){{ .MetricLabels }}", "format": "time_series", "intervalFactor": 1, "refId": "A"}],
   "thresholds": [],
   "timeFrom": null,
   "timeRegions": [],

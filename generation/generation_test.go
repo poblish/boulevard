@@ -39,7 +39,7 @@ func TestBasic(t *testing.T) {
 		labels[i] = each.MetricLabels
 	}
 
-	assert.Equal(t, []string{"", " by (city)", " by (type,breed)", "", "", "", "", "", ""}, labels)
+	assert.Equal(t, []string{"", " by (city)", " by (type,breed)", "", "", "", "", " by (quantile)", " by (quantile)"}, labels)
 
 	panelTitles := make([]string, len(metrics))
 	for i, each := range metrics {

@@ -235,8 +235,35 @@ func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName stri
 		metricType = "histogram"
 	} else if strings.HasPrefix(metricCall, "Timer") {
 		metricType = "timer"
+
+		if metricCall == "TimerWithLabel" {
+			singleLabel := stripQuotes(metricCallArgs[1].(*ast.BasicLit).Value)
+			fmt.Println(singleLabel)
+			metricLabelString = fmt.Sprintf(" by (%s,quantile)", singleLabel)
+		} else {
+			metricLabelString = " by (quantile)"
+		}
+
 	} else if strings.HasPrefix(metricCall, "Summary") {
 		metricType = "summary"
+
+		if metricCall == "SummaryWithLabels" {
+
+			multipleLabels := metricCallArgs[1].(*ast.CompositeLit).Elts
+			labelNames := make([]string, len(multipleLabels))
+
+			for i, entry := range multipleLabels {
+				labelNames[i] = stripQuotes(entry.(*ast.BasicLit).Value)
+			}
+
+			metricLabelString = fmt.Sprintf(" by (%s,quantile)", strings.Join(labelNames, ","))
+		} else if metricCall == "SummaryWithLabel" {
+
+			singleLabel := stripQuotes(metricCallArgs[1].(*ast.BasicLit).Value)
+			metricLabelString = fmt.Sprintf(" by (%s,quantile)", singleLabel)
+		} else {
+			metricLabelString = " by (quantile)"
+		}
 	}
 
 	return &metric{metricCall: metricCall, normalisedMetricName: normalisedMetricName, PanelTitle: metricName, MetricType: metricType, MetricLabels: metricLabelString}
