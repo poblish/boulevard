@@ -238,7 +238,6 @@ func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName stri
 
 		if metricCall == "TimerWithLabel" {
 			singleLabel := stripQuotes(metricCallArgs[1].(*ast.BasicLit).Value)
-			fmt.Println(singleLabel)
 			metricLabelString = fmt.Sprintf(" by (%s,quantile)", singleLabel)
 		} else {
 			metricLabelString = " by (quantile)"
