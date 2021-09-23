@@ -65,7 +65,7 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 						typeRef := eachPkg.TypesInfo.Uses[ident]
 
 						// Don't do == on type in case of pointer prefix
-						if typeRef != nil && strings.HasSuffix(typeRef.Type().String(), PromenadePkg) && mthd.Sel.Name != "TestHelper" {
+						if typeRef != nil && strings.Contains(typeRef.Type().String(), PromenadePkg) && mthd.Sel.Name != "TestHelper" {
 							metricName := stripQuotes(stmt.Args[0].(*ast.BasicLit).Value)
 
 							newMetric := dg.interceptMetric(mthd.Sel.Name, metricName, stmt.Args)
@@ -87,7 +87,7 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 					} else if subExpr, ok := mthd.X.(*ast.SelectorExpr); ok /* Nested calls like `defer x.Timer()` */ {
 						subExprTypeName := eachPkg.TypesInfo.Types[subExpr].Type
 
-						if subExprTypeName != nil && strings.HasSuffix(subExprTypeName.String(), PromenadePkg) {
+						if subExprTypeName != nil && strings.Contains(subExprTypeName.String(), PromenadePkg) {
 							metricName := stripQuotes(stmt.Args[0].(*ast.BasicLit).Value)
 
 							newMetric := dg.interceptMetric(mthd.Sel.Name, metricName, stmt.Args)
