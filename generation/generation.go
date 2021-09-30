@@ -282,7 +282,12 @@ func (dg *DashboardGenerator) discoverMetricOptions(pkg *packages.Package, stmt 
 				literalValue = value.Value
 			case *ast.Ident:
 				// dereference the Ident...
-				literalValue = pkg.TypesInfo.Types[value].Value.String()
+				identValue := pkg.TypesInfo.Types[value].Value
+				if identValue != nil {
+					literalValue = identValue.String()
+				} else {
+					fmt.Printf("[WARNING] Could not resolve MetricOptions identifier [%s] - is the value a constant?\n", value)
+				}
 			}
 
 			switch kv.Key.(*ast.Ident).Name {
