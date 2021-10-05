@@ -126,7 +126,7 @@ func main() {
 	}
 
 	// FIXME Hardcoded name
-	err = generator.GenerateGrafanaDashboard(dashboardOutputPath, metrics)
+	err = generator.GenerateGrafanaDashboard(dashboardOutputPath, metrics, state.DashboardTags)
 	if err != nil {
 		log.Fatalf("Generation failed %s", err)
 	}
@@ -146,4 +146,5 @@ type BoulevardState struct {
 	GeneratedChartDir string
 	DefaultPkg        string
 	RulesOutputFormat string
+	DashboardTags     []string
 }

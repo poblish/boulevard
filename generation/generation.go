@@ -152,7 +152,7 @@ func (dg *DashboardGenerator) GenerateAlertRules(filePath string, options Output
 	return dg.RuleGenerator.postProcess(filePath, dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.rawMetricPrefix, dg.metricsIntercepted, options)
 }
 
-func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metrics []*metric) error {
+func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metrics []*metric, dashboardTags []string) error {
 	// tmpl := template.Must(template.ParseGlob("/Users/andrewregan/Development/Go\\ work/promenade/templates/dashboard.json"))
 
 	tmpl, _ := template.New("default").Funcs(template.FuncMap{
@@ -179,7 +179,7 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 	fmt.Println("Writing dashboard to", FriendlyFileName(destFilePath))
 
 	uid := truncateText(dg.currentMetricPrefix+"generated", 40)
-	tErr := tmpl.Execute(outputFile, &dashboardData{Metrics: metrics, Title: dg.rawMetricPrefix + " Visualised Metrics", Id: uid})
+	tErr := tmpl.Execute(outputFile, &dashboardData{Metrics: metrics, Title: dg.rawMetricPrefix + " Visualised Metrics", Id: uid, DashboardTags: dashboardTags})
 	if tErr != nil {
 		log.Fatalf("template execution: %s", tErr)
 	}
@@ -317,9 +317,10 @@ func (dg *DashboardGenerator) handleDiscoveredPrefix(separator string) {
 }
 
 type dashboardData struct {
-	Metrics []*metric
-	Title   string
-	Id      string
+	Metrics       []*metric
+	Title         string
+	Id            string
+	DashboardTags []string
 }
 
 type metric struct {

@@ -140,7 +140,7 @@ func TestGrafanaDashboardGeneration(t *testing.T) {
 	//goland:noinspection GoUnhandledErrorResult
 	defer os.Remove(tempFile.Name())
 
-	err = generator.GenerateGrafanaDashboard(tempFile.Name(), metrics)
+	err = generator.GenerateGrafanaDashboard(tempFile.Name(), metrics, nil)
 	assert.NoError(t, err)
 	assert.FileExists(t, tempFile.Name())
 

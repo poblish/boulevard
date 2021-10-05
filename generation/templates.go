@@ -156,7 +156,7 @@ const DefaultDashboardTemplate = `{{define "counter_gauge_cumulative"}}
   "refresh": false,
   "schemaVersion": 16,
   "style": "dark",
-  "tags": [],
+  "tags": [{{ range $index, $element := .DashboardTags}}{{ if $index }}, {{end}}"{{ $element }}"{{end}}],
   "templating": {"list": []},
   "time": {"from": "now/d", "to": "now"},
   "timepicker": {
