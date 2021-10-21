@@ -218,7 +218,7 @@ func TestBadErrorRateAnnotations(t *testing.T) {
 	@ElevatedErrorRateAlertRule(name = calcProblems, errorLabel="e", timeRange=10m, ratePerSecondThreshold=1, summary = More errors, description = "Too high error rate")
 */
 //goland:noinspection GoUnusedFunction
-func sampleMetricUsage() { // Is used!!
+func sampleMetricUsage() { //nolint:unused,deadcode // Is used!!
 	metrics := promenade.NewMetrics(promenade.MetricOpts{MetricNamePrefix: "prefix"})
 	metrics.Counter("c").Inc()
 	metrics.Counter("c").Inc()
@@ -235,7 +235,7 @@ func sampleMetricUsage() { // Is used!!
 	fmt.Println(metrics.TestHelper().MetricNames())
 }
 
-func timedMethod(metrics *promenade.PrometheusMetrics) { // Is used!!
+func timedMethod(metrics *promenade.PrometheusMetrics) { //nolint:unused,deadcode  // Is used!!
 	defer metrics.Timer("t")()
 	fmt.Println("Whatever it is we're timing")
 }
