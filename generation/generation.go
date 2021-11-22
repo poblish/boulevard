@@ -20,7 +20,6 @@ type DashboardGenerator struct {
 	rawMetricPrefix          string
 	currentMetricPrefix      string
 	caseSensitiveMetricNames bool
-	alreadyGotErrors         bool
 	foundMetricsObject       bool
 	numPrefixesConfigured    int
 	metricsIntercepted       map[string]bool
@@ -36,7 +35,6 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 	dg.rawMetricPrefix = ""
 	dg.currentMetricPrefix = ""
 	dg.caseSensitiveMetricNames = false
-	dg.alreadyGotErrors = false
 	dg.foundMetricsObject = false
 	dg.numPrefixesConfigured = 0
 
@@ -222,13 +220,7 @@ func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName stri
 		}
 
 	} else if strings.HasPrefix(metricCall, "Error") {
-		if dg.alreadyGotErrors {
-			return nil
-		}
-
-		dg.alreadyGotErrors = true
 		metricType = "errors"
-
 	} else if strings.HasPrefix(metricCall, "Gauge") {
 		metricType = "gauge"
 	} else if strings.HasPrefix(metricCall, "Histo") {
