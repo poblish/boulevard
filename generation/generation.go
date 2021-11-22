@@ -141,7 +141,7 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 	}
 	metrics = metrics[:filteredIdx]
 
-	fmt.Println(len(dg.metricsIntercepted), "metrics discovered")
+	fmt.Println(len(dg.metricsIntercepted), "unique metrics discovered")
 
 	return metrics, nil
 }
