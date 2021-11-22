@@ -115,7 +115,15 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 
 		annotations := make(map[string]string)
 		annotations["description"] = ruleProps["description"]
-		annotations["summary"] = ruleProps["summary"] // FIXME use desc if blank
+
+		// Use desc as summary if not otherwise set
+		if ruleProps["summary"] != "" {
+			annotations["summary"] = ruleProps["summary"]
+		} else if ruleProps["description"] != "" {
+			annotations["summary"] = ruleProps["description"]
+		} else {
+			return fmt.Errorf("no summary or description for alert %s", alertName)
+		}
 
 		expr, err := eachRule.alertRuleExpression(metricPrefix)
 		if err != nil {
