@@ -47,6 +47,8 @@ func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup)
 	return nil
 }
 
+var prefixNormalizer = strings.NewReplacer("_", "", "-", "", " ", "")
+
 func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, multiplePrefixesFound bool, defaultDisplayPrefix string, fqnsInUse map[string]bool, options OutputOptions) error {
 
 	var alertEntries []AlertRuleOutput
@@ -69,6 +71,8 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 	if displayPrefix == "" {
 		displayPrefix = "Application"
 	}
+
+	displayPrefix = prefixNormalizer.Replace(displayPrefix)
 
 	for i, eachRule := range rg.alertRules {
 
