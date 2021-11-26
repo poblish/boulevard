@@ -146,7 +146,7 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 	return metrics, nil
 }
 
-func (dg *DashboardGenerator) GenerateAlertRules(filePath string, options OutputOptions) error {
+func (dg *DashboardGenerator) GenerateAlertRules(filePath string, options OutputOptions) (AlertMetrics, error) {
 	return dg.RuleGenerator.postProcess(filePath, dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.rawMetricPrefix, dg.metricsIntercepted, options)
 }
 

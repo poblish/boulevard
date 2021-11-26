@@ -19,6 +19,7 @@ var packageFlags packagesList
 var rulesOutputPath string
 var rulesOutputFormat string
 var dashboardOutputPath string
+var metricsLabelsPath string
 var sourcePath string
 
 var alertManagerOutputFormat = "alertManager"
@@ -46,6 +47,7 @@ func main() {
 	flag.StringVar(&rulesOutputPath, "rulesOutputPath", "", "Rules output path")
 	flag.StringVar(&rulesOutputFormat, "rulesOutputFormat", "", "Rules output format")
 	flag.StringVar(&dashboardOutputPath, "dashboardOutputPath", "", "Dashboard output path")
+	flag.StringVar(&metricsLabelsPath, "metricsLabelsPath", "", "Metrics labels path")
 	flag.Parse()
 
 	if rulesOutputPath == "" {
@@ -81,6 +83,12 @@ func main() {
 			rulesOutputFormat = state.RulesOutputFormat
 		} else {
 			rulesOutputPath = alertManagerOutputFormat
+		}
+	}
+
+	if metricsLabelsPath == "" {
+		if state.MetricsLabelsPath != "" {
+			metricsLabelsPath = state.MetricsLabelsPath
 		}
 	}
 
@@ -120,7 +128,7 @@ func main() {
 	}
 
 	// FIXME Hardcoded name
-	err = generator.GenerateAlertRules(rulesOutputPath, generation.OutputOptions{AlertRuleFormat: alertRuleFormat})
+	alertMetrics, err := generator.GenerateAlertRules(rulesOutputPath, generation.OutputOptions{AlertRuleFormat: alertRuleFormat})
 	if err != nil {
 		log.Fatalf("Alert rule generation failed %s", err)
 	}
@@ -129,6 +137,11 @@ func main() {
 	err = generator.GenerateGrafanaDashboard(dashboardOutputPath, metrics, state.DashboardTags)
 	if err != nil {
 		log.Fatalf("Generation failed %s", err)
+	}
+
+	if metricsLabelsPath != "" {
+		metricsOutput := generation.AlertMetricsOutput{AlertsCount: alertMetrics.Count, UniqueMetricsCount: len(metrics)}
+		metricsOutput.WriteToFile(metricsLabelsPath)
 	}
 }
 
@@ -146,5 +159,6 @@ type BoulevardState struct {
 	GeneratedChartDir string
 	DefaultPkg        string
 	RulesOutputFormat string
+	MetricsLabelsPath string
 	DashboardTags     []string
 }

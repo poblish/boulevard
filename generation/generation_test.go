@@ -117,8 +117,9 @@ func TestAlertRuleGeneration(t *testing.T) {
 	//goland:noinspection GoUnhandledErrorResult
 	defer os.Remove(tempFile.Name())
 
-	err = generator.GenerateAlertRules(tempFile.Name(), OutputOptions{AlertRuleFormat: PrometheusAlertManagerFormat})
+	alertMetrics, err := generator.GenerateAlertRules(tempFile.Name(), OutputOptions{AlertRuleFormat: PrometheusAlertManagerFormat})
 	assert.NoError(t, err)
+	assert.Equal(t, 2, alertMetrics.Count)
 	assert.FileExists(t, tempFile.Name())
 
 	bytes, _ := ioutil.ReadFile(tempFile.Name())
@@ -177,8 +178,9 @@ func TestInvalidErrorLabelAnnotation(t *testing.T) {
 	//goland:noinspection GoUnhandledErrorResult
 	defer os.Remove(tempFile.Name())
 
-	err = generator.GenerateAlertRules(tempFile.Name(), OutputOptions{AlertRuleFormat: PrometheusAlertManagerFormat})
+	alertMetrics, err := generator.GenerateAlertRules(tempFile.Name(), OutputOptions{AlertRuleFormat: PrometheusAlertManagerFormat})
 	assert.Error(t, err)
+	assert.Equal(t, 1, alertMetrics.Count)
 	assert.Contains(t, err.Error(), "alert refers to missing metric prefix_e")
 }
 
@@ -206,8 +208,9 @@ func TestBadErrorRateAnnotations(t *testing.T) {
 	//goland:noinspection ALL
 	defer os.Remove(tempFile.Name())
 
-	err = generator.GenerateAlertRules(tempFile.Name(), OutputOptions{AlertRuleFormat: PrometheusAlertManagerFormat})
+	alertMetrics, err := generator.GenerateAlertRules(tempFile.Name(), OutputOptions{AlertRuleFormat: PrometheusAlertManagerFormat})
 	assert.Error(t, err)
+	assert.Equal(t, 1, alertMetrics.Count)
 	assert.Contains(t, err.Error(), "bad ratePerSecondThreshold: strconv.ParseFloat: parsing \"\": invalid syntax")
 }
 

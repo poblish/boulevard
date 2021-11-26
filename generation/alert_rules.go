@@ -49,7 +49,8 @@ func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup)
 
 var prefixNormalizer = strings.NewReplacer("_", "", "-", "", " ", "")
 
-func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, multiplePrefixesFound bool, defaultDisplayPrefix string, fqnsInUse map[string]bool, options OutputOptions) error {
+func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, multiplePrefixesFound bool,
+	defaultDisplayPrefix string, fqnsInUse map[string]bool, options OutputOptions) (AlertMetrics, error) {
 
 	var alertEntries []AlertRuleOutput
 	var operatorAlertEntries []PrometheusOperatorAlertRuleOutput
@@ -73,6 +74,8 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 	}
 
 	displayPrefix = prefixNormalizer.Replace(displayPrefix)
+
+	metrics := AlertMetrics{Count: len(rg.alertRules)}
 
 	for i, eachRule := range rg.alertRules {
 
@@ -104,7 +107,7 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 
 		// Validate errorLabel is an actual metric name
 		if _, ok := fqnsInUse[alertMetricFqn]; !ok {
-			return fmt.Errorf("alert refers to missing metric %s", alertMetricFqn)
+			return metrics, fmt.Errorf("alert refers to missing metric %s", alertMetricFqn)
 		}
 
 		alertName := displayPrefix + strings.Title(ruleProps["name"])
@@ -122,12 +125,12 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 		} else if ruleProps["description"] != "" {
 			annotations["summary"] = ruleProps["description"]
 		} else {
-			return fmt.Errorf("no summary or description for alert %s", alertName)
+			return metrics, fmt.Errorf("no summary or description for alert %s", alertName)
 		}
 
 		expr, err := eachRule.alertRuleExpression(metricPrefix)
 		if err != nil {
-			return err
+			return metrics, err
 		}
 
 		switch options.AlertRuleFormat {
@@ -149,7 +152,7 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 
 	data, err := yaml.Marshal(&alertRulesSpec)
 	if err != nil {
-		return fmt.Errorf("alert marshalling error: %v", err)
+		return metrics, fmt.Errorf("alert marshalling error: %v", err)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(destFilePath), os.ModePerm); err != nil {
@@ -160,10 +163,10 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 
 	err = ioutil.WriteFile(destFilePath, data, 0644)
 	if err != nil {
-		return fmt.Errorf("output error: %v", err)
+		return metrics, fmt.Errorf("output error: %v", err)
 	}
 
-	return err
+	return metrics, err
 }
 
 func (rg *RuleGenerator) parseZeroToleranceErrorAlertRule(comment string) {
