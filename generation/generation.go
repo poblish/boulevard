@@ -66,7 +66,7 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 						if typeRef != nil && strings.Contains(typeRef.Type().String(), PromenadePkg) && mthd.Sel.Name != "TestHelper" {
 							metricName := stripQuotes(stmt.Args[0].(*ast.BasicLit).Value)
 
-							newMetric := dg.interceptMetric(mthd.Sel.Name, metricName, stmt.Args)
+							newMetric := dg.interceptMetric(eachPkg, mthd.Sel.Name, metricName, stmt.Args)
 							if newMetric != nil {
 								metrics = append(metrics, newMetric)
 							}
@@ -86,9 +86,12 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 						subExprTypeName := eachPkg.TypesInfo.Types[subExpr].Type
 
 						if subExprTypeName != nil && strings.Contains(subExprTypeName.String(), PromenadePkg) {
-							metricName := stripQuotes(stmt.Args[0].(*ast.BasicLit).Value)
 
-							newMetric := dg.interceptMetric(mthd.Sel.Name, metricName, stmt.Args)
+							metricName := obtainConstantValue(eachPkg, stmt.Args[0], func(value interface{}) {
+								log.Fatalf("Unexpected type: %v", value)
+							})
+
+							newMetric := dg.interceptMetric(eachPkg, mthd.Sel.Name, metricName, stmt.Args)
 							if newMetric != nil {
 								metrics = append(metrics, newMetric)
 							}
@@ -185,7 +188,7 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 	return outputFile.Close()
 }
 
-func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName string, metricCallArgs []ast.Expr) *metric {
+func (dg *DashboardGenerator) interceptMetric(pkg *packages.Package, metricCall string, metricName string, metricCallArgs []ast.Expr) *metric {
 	var normalisedMetricName string
 	if dg.caseSensitiveMetricNames {
 		normalisedMetricName = normalizer.Replace(metricName)
@@ -210,8 +213,9 @@ func (dg *DashboardGenerator) interceptMetric(metricCall string, metricName stri
 
 			metricType = "counter"
 		} else if metricCall == "CounterWithLabel" {
-
-			singleLabel := stripQuotes(metricCallArgs[1].(*ast.BasicLit).Value)
+			singleLabel := obtainConstantValue(pkg, metricCallArgs[1], func(value interface{}) {
+				log.Fatalf("Could not obtain counter label: %v", value)
+			})
 			metricLabelString = fmt.Sprintf(" by (%s)", singleLabel)
 
 			metricType = "counter"
@@ -268,19 +272,9 @@ func (dg *DashboardGenerator) discoverMetricOptions(pkg *packages.Package, stmt 
 	for _, elt := range stmt.Elts {
 		if kv, ok := elt.(*ast.KeyValueExpr); ok {
 
-			var literalValue string
-			switch value := kv.Value.(type) {
-			case *ast.BasicLit:
-				literalValue = value.Value
-			case *ast.Ident:
-				// dereference the Ident...
-				identValue := pkg.TypesInfo.Types[value].Value
-				if identValue != nil {
-					literalValue = identValue.String()
-				} else {
-					fmt.Printf("[WARNING] Could not resolve MetricOptions identifier [%s] - is the value a constant?\n", value)
-				}
-			}
+			literalValue := obtainConstantValue(pkg, kv.Value, func(value interface{}) {
+				fmt.Printf("[WARNING] Could not resolve MetricOptions identifier [%s] - is the value a constant?\n", value)
+			})
 
 			switch kv.Key.(*ast.Ident).Name {
 			case "MetricNamePrefix":
@@ -347,4 +341,22 @@ func truncateText(s string, max int) string {
 		return s
 	}
 	return s[:strings.LastIndexAny(s[:max], " .,:;-")]
+}
+
+func obtainConstantValue(pkg *packages.Package, object interface{}, errorHandler func(value interface{})) string {
+	switch value := object.(type) {
+	case *ast.BasicLit:
+		return stripQuotes(value.Value)
+	case *ast.Ident:
+		// dereference the Ident...
+		identValue := pkg.TypesInfo.Types[value].Value
+		if identValue != nil {
+			return stripQuotes(identValue.String())
+		} else {
+			errorHandler(value)
+		}
+	}
+
+	errorHandler(object)
+	return "" // unused
 }
