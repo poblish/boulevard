@@ -37,7 +37,9 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 
 	var metrics []*metric
 
-	dg.rawMetricPrefix = ""
+	// NB. Don't normalise dg.DefaultMetricsPrefix in-place, as we lose potential dashes that can help with `strings.Title` elsewhere
+
+	dg.rawMetricPrefix = dg.DefaultMetricsPrefix
 	dg.currentMetricPrefix = ""
 	dg.caseSensitiveMetricNames = false
 	dg.foundMetricsObject = false
@@ -191,13 +193,24 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 
 	fmt.Println("Writing dashboard to", FriendlyFileName(destFilePath))
 
-	uid := truncateText(dg.currentMetricPrefix+"generated", 40)
-	tErr := tmpl.Execute(outputFile, &dashboardData{Metrics: metrics, Title: dg.rawMetricPrefix + " Visualised Metrics", Id: uid, DashboardTags: dashboardTags})
+	uid := truncateText(dg.displayStringOrDefault(dg.currentMetricPrefix)+"generated", 40)
+
+	title := fmt.Sprintf("%s Visualised Metrics", normaliseAndLowercaseName(dg.displayStringOrDefault(dg.rawMetricPrefix)))
+
+	tErr := tmpl.Execute(outputFile, &dashboardData{Metrics: metrics, Title: title, Id: uid, DashboardTags: dashboardTags})
 	if tErr != nil {
 		log.Fatalf("template execution: %s", tErr)
 	}
 
 	return outputFile.Close()
+}
+
+func (dg *DashboardGenerator) displayStringOrDefault(desired string) string {
+	if desired != "" {
+		return desired
+	} else {
+		return dg.DefaultMetricsPrefix
+	}
 }
 
 func (dg *DashboardGenerator) interceptMetric(pkg *packages.Package, metricCall string, metricName string, metricCallArgs []ast.Expr) *metric {
