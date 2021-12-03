@@ -17,10 +17,12 @@ const PromenadePkg = "github.com/poblish/promenade/api.PrometheusMetrics"
 
 type DashboardGenerator struct {
 	RuleGenerator
-	rawMetricPrefix          string
-	currentMetricPrefix      string
 
 	DefaultMetricsPrefix string
+
+	rawMetricPrefix     string
+	currentMetricPrefix string
+	metricPrefixWasSet  bool
 
 	caseSensitiveMetricNames bool
 	foundMetricsObject       bool
@@ -90,8 +92,9 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 
 						if subExprTypeName != nil && strings.Contains(subExprTypeName.String(), PromenadePkg) {
 
-							metricName := obtainConstantValue(eachPkg, stmt.Args[0], func(value interface{}) {
+							metricName := obtainConstantValue(eachPkg, stmt.Args[0], func(value interface{}) string {
 								log.Fatalf("Unexpected type: %v", value)
+								return "" // unused
 							})
 
 							newMetric := dg.interceptMetric(eachPkg, mthd.Sel.Name, metricName, stmt.Args)
@@ -120,6 +123,12 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 
 	// Complete...
 	dg.metricsIntercepted = make(map[string]bool)
+
+	if dg.currentMetricPrefix != "" {
+		fmt.Println("Using metrics prefix:", dg.currentMetricPrefix)
+	} else {
+		fmt.Println("[WARNING] Using blank metrics prefix")
+	}
 
 	filteredIdx := 0
 
@@ -216,8 +225,9 @@ func (dg *DashboardGenerator) interceptMetric(pkg *packages.Package, metricCall 
 
 			metricType = "counter"
 		} else if metricCall == "CounterWithLabel" {
-			singleLabel := obtainConstantValue(pkg, metricCallArgs[1], func(value interface{}) {
+			singleLabel := obtainConstantValue(pkg, metricCallArgs[1], func(value interface{}) string {
 				log.Fatalf("Could not obtain counter label: %v", value)
+				return "" // unused
 			})
 			metricLabelString = fmt.Sprintf(" by (%s)", singleLabel)
 
@@ -267,6 +277,8 @@ func (dg *DashboardGenerator) interceptMetric(pkg *packages.Package, metricCall 
 	return &metric{metricCall: metricCall, normalisedMetricName: normalisedMetricName, PanelTitle: metricName, MetricType: metricType, MetricLabels: metricLabelString}
 }
 
+const BadPrefix = "__bad__"
+
 func (dg *DashboardGenerator) discoverMetricOptions(pkg *packages.Package, stmt *ast.CompositeLit) {
 	dg.foundMetricsObject = true
 
@@ -275,15 +287,22 @@ func (dg *DashboardGenerator) discoverMetricOptions(pkg *packages.Package, stmt 
 	for _, elt := range stmt.Elts {
 		if kv, ok := elt.(*ast.KeyValueExpr); ok {
 
-			literalValue := obtainConstantValue(pkg, kv.Value, func(value interface{}) {
+			literalValue := obtainConstantValue(pkg, kv.Value, func(value interface{}) string {
 				fmt.Printf("[WARNING] Could not resolve MetricOptions identifier [%s] - is the value a constant?\n", value)
+				return BadPrefix
 			})
 
 			switch kv.Key.(*ast.Ident).Name {
 			case "MetricNamePrefix":
-				dg.rawMetricPrefix = stripQuotes(literalValue)
+				if literalValue != BadPrefix {
+					dg.rawMetricPrefix = literalValue
+					dg.metricPrefixWasSet = true
+				} else {
+					dg.rawMetricPrefix = ""
+					dg.metricPrefixWasSet = false
+				}
 			case "PrefixSeparator":
-				rawPrefixSeparator = stripQuotes(literalValue)
+				rawPrefixSeparator = literalValue
 			case "CaseSensitiveMetricNames":
 				dg.caseSensitiveMetricNames = true
 			}
@@ -295,6 +314,11 @@ func (dg *DashboardGenerator) discoverMetricOptions(pkg *packages.Package, stmt 
 
 func (dg *DashboardGenerator) handleDiscoveredPrefix(separator string) {
 	newMetricPrefix := normaliseAndLowercaseName(dg.rawMetricPrefix)
+
+	if !dg.metricPrefixWasSet && dg.DefaultMetricsPrefix != "" {
+		newMetricPrefix = dg.DefaultMetricsPrefix
+	}
+
 	if newMetricPrefix != "" && !strings.HasSuffix(newMetricPrefix, separator) {
 		newMetricPrefix += separator
 	}
@@ -346,7 +370,7 @@ func truncateText(s string, max int) string {
 	return s[:strings.LastIndexAny(s[:max], " .,:;-")]
 }
 
-func obtainConstantValue(pkg *packages.Package, object interface{}, errorHandler func(value interface{})) string {
+func obtainConstantValue(pkg *packages.Package, object interface{}, errorHandler func(value interface{}) string) string {
 	switch value := object.(type) {
 	case *ast.BasicLit:
 		return stripQuotes(value.Value)
@@ -356,10 +380,9 @@ func obtainConstantValue(pkg *packages.Package, object interface{}, errorHandler
 		if identValue != nil {
 			return stripQuotes(identValue.String())
 		} else {
-			errorHandler(value)
+			return errorHandler(value)
 		}
 	}
 
-	errorHandler(object)
-	return "" // unused
+	return errorHandler(object)
 }
