@@ -316,7 +316,7 @@ func (dg *DashboardGenerator) handleDiscoveredPrefix(separator string) {
 	newMetricPrefix := normaliseAndLowercaseName(dg.rawMetricPrefix)
 
 	if !dg.metricPrefixWasSet && dg.DefaultMetricsPrefix != "" {
-		newMetricPrefix = dg.DefaultMetricsPrefix
+		newMetricPrefix = normaliseAndLowercaseName(dg.DefaultMetricsPrefix)
 	}
 
 	if newMetricPrefix != "" && !strings.HasSuffix(newMetricPrefix, separator) {
