@@ -19,6 +19,9 @@ type DashboardGenerator struct {
 	RuleGenerator
 	rawMetricPrefix          string
 	currentMetricPrefix      string
+
+	DefaultMetricsPrefix string
+
 	caseSensitiveMetricNames bool
 	foundMetricsObject       bool
 	numPrefixesConfigured    int

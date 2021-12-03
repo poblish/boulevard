@@ -21,6 +21,7 @@ var rulesOutputFormat string
 var dashboardOutputPath string
 var metricsLabelsPath string
 var sourcePath string
+var defaultMetricsPrefix string
 
 var alertManagerOutputFormat = "alertManager"
 var defaultRulesOutputFileName = "alert_rules.yaml"
@@ -48,6 +49,7 @@ func main() {
 	flag.StringVar(&rulesOutputFormat, "rulesOutputFormat", "", "Rules output format")
 	flag.StringVar(&dashboardOutputPath, "dashboardOutputPath", "", "Dashboard output path")
 	flag.StringVar(&metricsLabelsPath, "metricsLabelsPath", "", "Metrics labels path")
+	flag.StringVar(&defaultMetricsPrefix, "defaultMetricsPrefix", "", "Metrics prefix fallback/default")
 	flag.Parse()
 
 	if rulesOutputPath == "" {
@@ -92,6 +94,10 @@ func main() {
 		}
 	}
 
+	if defaultMetricsPrefix == "" {
+		defaultMetricsPrefix = state.DefaultMetricsPrefix
+	}
+
 	var alertRuleFormat int
 	switch rulesOutputFormat {
 	case alertManagerOutputFormat:
@@ -117,7 +123,7 @@ func main() {
 		log.Fatalf("Could not load packages %s", err)
 	}
 
-	generator := &generation.DashboardGenerator{}
+	generator := &generation.DashboardGenerator{DefaultMetricsPrefix: defaultMetricsPrefix}
 	metrics, err := generator.DiscoverMetrics(loadedPkgs)
 	if err != nil {
 		log.Fatalf("Metrics discovery failed %s", err)
@@ -155,10 +161,11 @@ func (i *packagesList) Set(value string) error {
 }
 
 type BoulevardState struct {
-	SourcePath        string
-	GeneratedChartDir string
-	DefaultPkg        string
-	RulesOutputFormat string
-	MetricsLabelsPath string
-	DashboardTags     []string
+	SourcePath           string
+	GeneratedChartDir    string
+	DefaultPkg           string
+	DefaultMetricsPrefix string
+	RulesOutputFormat    string
+	MetricsLabelsPath    string
+	DashboardTags        []string
 }
