@@ -19,6 +19,7 @@ type DashboardGenerator struct {
 	RuleGenerator
 
 	DefaultMetricsPrefix string
+	DashboardTitle       string
 
 	rawMetricPrefix     string
 	currentMetricPrefix string
@@ -195,7 +196,10 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 
 	uid := truncateText(dg.displayStringOrDefault(dg.currentMetricPrefix)+"generated", 40)
 
-	title := fmt.Sprintf("%s Visualised Metrics", normaliseAndLowercaseName(dg.displayStringOrDefault(dg.rawMetricPrefix)))
+	title := dg.DashboardTitle
+	if title == "" {
+		title = fmt.Sprintf("%s Visualised Metrics", normaliseAndLowercaseName(dg.displayStringOrDefault(dg.rawMetricPrefix)))
+	}
 
 	tErr := tmpl.Execute(outputFile, &dashboardData{Metrics: metrics, Title: title, Id: uid, DashboardTags: dashboardTags})
 	if tErr != nil {

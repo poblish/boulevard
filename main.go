@@ -19,6 +19,7 @@ var packageFlags packagesList
 var rulesOutputPath string
 var rulesOutputFormat string
 var dashboardOutputPath string
+var dashboardTitle string
 var metricsLabelsPath string
 var sourcePath string
 var defaultMetricsPrefix string
@@ -48,6 +49,7 @@ func main() {
 	flag.StringVar(&rulesOutputPath, "rulesOutputPath", "", "Rules output path")
 	flag.StringVar(&rulesOutputFormat, "rulesOutputFormat", "", "Rules output format")
 	flag.StringVar(&dashboardOutputPath, "dashboardOutputPath", "", "Dashboard output path")
+	flag.StringVar(&dashboardTitle, "dashboardTitle", "", "Override default Dashboard title")
 	flag.StringVar(&metricsLabelsPath, "metricsLabelsPath", "", "Metrics labels path")
 	flag.StringVar(&defaultMetricsPrefix, "defaultMetricsPrefix", "", "Metrics prefix fallback/default")
 	flag.Parse()
@@ -98,6 +100,10 @@ func main() {
 		defaultMetricsPrefix = state.DefaultMetricsPrefix
 	}
 
+	if dashboardTitle == "" {
+		dashboardTitle = state.DashboardTitleOverride
+	}
+
 	var alertRuleFormat int
 	switch rulesOutputFormat {
 	case alertManagerOutputFormat:
@@ -123,7 +129,7 @@ func main() {
 		log.Fatalf("Could not load packages %s", err)
 	}
 
-	generator := &generation.DashboardGenerator{DefaultMetricsPrefix: defaultMetricsPrefix}
+	generator := &generation.DashboardGenerator{DefaultMetricsPrefix: defaultMetricsPrefix, DashboardTitle: dashboardTitle}
 	metrics, err := generator.DiscoverMetrics(loadedPkgs)
 	if err != nil {
 		log.Fatalf("Metrics discovery failed %s", err)
@@ -161,11 +167,12 @@ func (i *packagesList) Set(value string) error {
 }
 
 type BoulevardState struct {
-	SourcePath           string
-	GeneratedChartDir    string
-	DefaultPkg           string
-	DefaultMetricsPrefix string
-	RulesOutputFormat    string
-	MetricsLabelsPath    string
-	DashboardTags        []string
+	SourcePath             string
+	GeneratedChartDir      string
+	DefaultPkg             string
+	DefaultMetricsPrefix   string
+	RulesOutputFormat      string
+	MetricsLabelsPath      string
+	DashboardTitleOverride string
+	DashboardTags          []string
 }
