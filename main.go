@@ -19,6 +19,7 @@ var packageFlags packagesList
 var rulesOutputPath string
 var rulesOutputFormat string
 var dashboardOutputPath string
+var dashboardUid string
 var dashboardTitle string
 var metricsLabelsPath string
 var sourcePath string
@@ -49,6 +50,7 @@ func main() {
 	flag.StringVar(&rulesOutputPath, "rulesOutputPath", "", "Rules output path")
 	flag.StringVar(&rulesOutputFormat, "rulesOutputFormat", "", "Rules output format")
 	flag.StringVar(&dashboardOutputPath, "dashboardOutputPath", "", "Dashboard output path")
+	flag.StringVar(&dashboardUid, "dashboardUid", "", "Override default Dashboard id")
 	flag.StringVar(&dashboardTitle, "dashboardTitle", "", "Override default Dashboard title")
 	flag.StringVar(&metricsLabelsPath, "metricsLabelsPath", "", "Metrics labels path")
 	flag.StringVar(&defaultMetricsPrefix, "defaultMetricsPrefix", "", "Metrics prefix fallback/default")
@@ -100,6 +102,10 @@ func main() {
 		defaultMetricsPrefix = state.DefaultMetricsPrefix
 	}
 
+	if dashboardUid == "" {
+		dashboardUid = state.DashboardUidOverride
+	}
+
 	if dashboardTitle == "" {
 		dashboardTitle = state.DashboardTitleOverride
 	}
@@ -129,7 +135,7 @@ func main() {
 		log.Fatalf("Could not load packages %s", err)
 	}
 
-	generator := &generation.DashboardGenerator{DefaultMetricsPrefix: defaultMetricsPrefix, DashboardTitle: dashboardTitle}
+	generator := &generation.DashboardGenerator{DefaultMetricsPrefix: defaultMetricsPrefix, DashboardUid: dashboardUid, DashboardTitle: dashboardTitle}
 	metrics, err := generator.DiscoverMetrics(loadedPkgs)
 	if err != nil {
 		log.Fatalf("Metrics discovery failed %s", err)
@@ -173,6 +179,7 @@ type BoulevardState struct {
 	DefaultMetricsPrefix   string
 	RulesOutputFormat      string
 	MetricsLabelsPath      string
+	DashboardUidOverride   string
 	DashboardTitleOverride string
 	DashboardTags          []string
 }

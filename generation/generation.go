@@ -19,6 +19,7 @@ type DashboardGenerator struct {
 	RuleGenerator
 
 	DefaultMetricsPrefix string
+	DashboardUid         string
 	DashboardTitle       string
 
 	rawMetricPrefix     string
@@ -194,7 +195,11 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 
 	fmt.Println("Writing dashboard to", FriendlyFileName(destFilePath))
 
-	uid := truncateText(dg.displayStringOrDefault(dg.currentMetricPrefix)+"generated", 40)
+	uid := dg.DashboardUid
+	if uid == "" {
+		uid = dg.displayStringOrDefault(dg.currentMetricPrefix) + "generated"
+	}
+	uid = truncateText(uid, 40)
 
 	title := dg.DashboardTitle
 	if title == "" {
@@ -384,7 +389,13 @@ func truncateText(s string, max int) string {
 	if max > len(s) {
 		return s
 	}
-	return s[:strings.LastIndexAny(s[:max], " .,:;-")]
+
+	last := strings.LastIndexAny(s[:max], " .,:;-")
+	if last >= 0 {
+		return s[:last]
+	} else {
+		return s[:max]
+	}
 }
 
 func obtainConstantValue(pkg *packages.Package, object interface{}, errorHandler func(value interface{}) string) string {
