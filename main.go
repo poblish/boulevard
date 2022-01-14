@@ -14,6 +14,7 @@ import (
 )
 
 type packagesList []string
+type extraLabels []string
 
 var packageFlags packagesList
 var rulesOutputPath string
@@ -24,6 +25,7 @@ var dashboardTitle string
 var metricsLabelsPath string
 var sourcePath string
 var defaultMetricsPrefix string
+var alertExtraLabels extraLabels
 
 var alertManagerOutputFormat = "alertManager"
 var defaultRulesOutputFileName = "alert_rules.yaml"
@@ -53,6 +55,7 @@ func main() {
 	flag.StringVar(&dashboardUid, "dashboardUid", "", "Override default Dashboard id")
 	flag.StringVar(&dashboardTitle, "dashboardTitle", "", "Override default Dashboard title")
 	flag.StringVar(&metricsLabelsPath, "metricsLabelsPath", "", "Metrics labels path")
+	flag.Var(&alertExtraLabels, "alertExtraLabels", "Extra alert labels (key=value)")
 	flag.StringVar(&defaultMetricsPrefix, "defaultMetricsPrefix", "", "Metrics prefix fallback/default")
 	flag.Parse()
 
@@ -110,6 +113,10 @@ func main() {
 		dashboardTitle = state.DashboardTitleOverride
 	}
 
+	if len(alertExtraLabels) == 0 {
+		alertExtraLabels = state.AlertExtraLabels
+	}
+
 	var alertRuleFormat int
 	switch rulesOutputFormat {
 	case alertManagerOutputFormat:
@@ -146,7 +153,7 @@ func main() {
 	}
 
 	// FIXME Hardcoded name
-	alertMetrics, err := generator.GenerateAlertRules(rulesOutputPath, generation.OutputOptions{AlertRuleFormat: alertRuleFormat})
+	alertMetrics, err := generator.GenerateAlertRules(rulesOutputPath, generation.OutputOptions{AlertRuleFormat: alertRuleFormat, ExtraLabels: alertExtraLabels})
 	if err != nil {
 		log.Fatalf("Alert rule generation failed %s", err)
 	}
@@ -172,6 +179,15 @@ func (i *packagesList) Set(value string) error {
 	return nil
 }
 
+func (i *extraLabels) String() string {
+	return "my string representation"
+}
+
+func (i *extraLabels) Set(value string) error {
+	*i = append(*i, value)
+	return nil
+}
+
 type BoulevardState struct {
 	SourcePath             string
 	GeneratedChartDir      string
@@ -182,4 +198,5 @@ type BoulevardState struct {
 	DashboardUidOverride   string
 	DashboardTitleOverride string
 	DashboardTags          []string
+	AlertExtraLabels       []string
 }

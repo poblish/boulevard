@@ -24,6 +24,7 @@ const (
 
 type OutputOptions struct {
 	AlertRuleFormat int
+	ExtraLabels     []string
 }
 
 func (rg *RuleGenerator) processAlertAnnotations(commentGroup *ast.CommentGroup) error {
@@ -115,6 +116,12 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 		labels := make(map[string]string)
 		labels["severity"] = ruleProps["severity"] // FIXME check blank
 		labels["team"] = ruleProps["team"]         // FIXME check blank
+
+		for _, each := range options.ExtraLabels {
+			idx := strings.Index(each, "=")
+			k := strings.TrimSpace(each[:idx])
+			labels[k] = strings.TrimSpace(each[idx+1:])
+		}
 
 		annotations := make(map[string]string)
 		annotations["description"] = ruleProps["description"]
