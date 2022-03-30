@@ -126,6 +126,15 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 		annotations := make(map[string]string)
 		annotations["description"] = ruleProps["description"]
 
+		runbookAnnotationName := "runbook_url"
+		if rg.defaults != nil && rg.defaults.runbookUrlAnnotationName != "" {
+			runbookAnnotationName = rg.defaults.runbookUrlAnnotationName
+		}
+
+		if ruleProps["runbook_url"] != "" {
+			annotations[runbookAnnotationName] = ruleProps["runbook_url"]
+		}
+
 		// Use desc as summary if not otherwise set
 		if ruleProps["summary"] != "" {
 			annotations["summary"] = ruleProps["summary"]
@@ -200,7 +209,12 @@ func (rg *RuleGenerator) parseAlertDefaults(comment string) {
 	props := make(map[string]string)
 	parsePayload(comment, props)
 
-	rg.defaults = &AlertDefaults{displayPrefix: props["displayPrefix"], team: props["team"], severity: props["severity"]}
+	rg.defaults = &AlertDefaults{
+		displayPrefix:            props["displayPrefix"],
+		team:                     props["team"],
+		severity:                 props["severity"],
+		runbookUrlAnnotationName: props["runbookUrlAnnotationName"],
+	}
 }
 
 func extractPayload(comment string) string {

@@ -6,9 +6,10 @@ import (
 )
 
 type AlertDefaults struct {
-	displayPrefix string
-	team          string
-	severity      string
+	displayPrefix            string
+	team                     string
+	severity                 string
+	runbookUrlAnnotationName string
 }
 
 type AlertRule interface {
