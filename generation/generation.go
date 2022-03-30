@@ -166,7 +166,7 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 }
 
 func (dg *DashboardGenerator) GenerateAlertRules(filePath string, options OutputOptions) (AlertMetrics, error) {
-	return dg.RuleGenerator.postProcess(filePath, dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.rawMetricPrefix, dg.metricsIntercepted, options)
+	return dg.RuleGenerator.postProcess(filePath, dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.currentMetricPrefix, dg.metricsIntercepted, options)
 }
 
 func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metrics []*metric, dashboardTags []string) error {
