@@ -73,13 +73,17 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 
 						// Don't do == on type in case of pointer prefix
 						if typeRef != nil && strings.Contains(typeRef.Type().String(), PromenadePkg) && mthd.Sel.Name != "TestHelper" {
-							metricName := stripQuotes(stmt.Args[0].(*ast.BasicLit).Value)
+							switch firstArg := stmt.Args[0].(type) {
+							case *ast.BasicLit:
+								metricName := stripQuotes(firstArg.Value)
 
-							newMetric := dg.interceptMetric(eachPkg, mthd.Sel.Name, metricName, stmt.Args)
-							if newMetric != nil {
-								metrics = append(metrics, newMetric)
+								newMetric := dg.interceptMetric(eachPkg, mthd.Sel.Name, metricName, stmt.Args)
+								if newMetric != nil {
+									metrics = append(metrics, newMetric)
+								}
+							default:
+								fmt.Println("Ignoring non-metric call:", mthd)
 							}
-
 						} else {
 							statementType := eachPkg.TypesInfo.Types[stmt].Type
 
