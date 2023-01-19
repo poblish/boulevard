@@ -175,10 +175,8 @@ func (dg *DashboardGenerator) GenerateAlertRules(filePath string, options Output
 	return dg.RuleGenerator.postProcess(filePath, dg.currentMetricPrefix, dg.numPrefixesConfigured > 1, dg.currentMetricPrefix, dg.metricsIntercepted, options)
 }
 
-func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metrics []*metric, dashboardTags []string) error {
-	// tmpl := template.Must(template.ParseGlob("/Users/andrewregan/Development/Go\\ work/promenade/templates/dashboard.json"))
-
-	tmpl, _ := template.New("default").Funcs(template.FuncMap{
+func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metrics []*metric, dashboardTags []string, externalMetricNames []string) error {
+	tmpl, err := template.New("default").Funcs(template.FuncMap{
 
 		"incrementingPanelId": func() int {
 			globalIncrementingPanelId++
@@ -189,6 +187,10 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 			return (globalIncrementingPanelId % 2) * 12 // Switch from left to right, 2 abreast
 		},
 	}).Parse(DefaultDashboardTemplate)
+
+	if err != nil {
+		log.Fatalf("Template parse failed: %s", err)
+	}
 
 	if err := os.MkdirAll(filepath.Dir(destFilePath), os.ModePerm); err != nil {
 		log.Fatalf("Output directory creation failed: %s", err)
@@ -213,8 +215,23 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 		title = fmt.Sprintf("%s Visualised Metrics", normaliseAndLowercaseName(dg.displayStringOrDefault(dg.rawMetricPrefix)))
 	}
 
+	data := dashboardData{
+		Metrics: metrics,
+		Title:   title,
+		Id:      uid,
+	}
+
+	for _, each := range externalMetricNames {
+		data.ExternalTimers = append(data.ExternalTimers, &metric{
+			FullMetricName:   dg.currentMetricPrefix + "jsonrpc2_server",
+			MetricLabels:     " by (quantile)",
+			ExtraLabelFilter: fmt.Sprintf(`method=\"%s\",`, each),
+			PanelTitle:       fmt.Sprintf(`JRPC: %s`, each),
+		})
+	}
+
 	rawJsonBuf := bytes.Buffer{}
-	if tErr := tmpl.Execute(&rawJsonBuf, &dashboardData{Metrics: metrics, Title: title, Id: uid, DashboardTags: dashboardTags}); tErr != nil {
+	if tErr := tmpl.Execute(&rawJsonBuf, &data); tErr != nil {
 		log.Fatalf("template execution: %s", tErr)
 	}
 
@@ -369,7 +386,9 @@ func (dg *DashboardGenerator) handleDiscoveredPrefix(separator string) {
 }
 
 type dashboardData struct {
-	Metrics       []*metric
+	Metrics        []*metric
+	ExternalTimers []*metric
+
 	Title         string
 	Id            string
 	DashboardTags []string
@@ -384,6 +403,8 @@ type metric struct {
 	MetricLabels   string
 	FullMetricName string
 	PanelTitle     string
+
+	ExtraLabelFilter string
 }
 
 var normalizer = strings.NewReplacer(".", "_", "-", "_", "#", "_", " ", "_")

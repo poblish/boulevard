@@ -157,8 +157,7 @@ func main() {
 		log.Fatalf("Alert rule generation failed %s", err)
 	}
 
-	// FIXME Hardcoded name
-	err = generator.GenerateGrafanaDashboard(dashboardOutputPath, metrics, state.DashboardTags)
+	err = generator.GenerateGrafanaDashboard(dashboardOutputPath, metrics, state.DashboardTags, state.ExternalMetricNames)
 	if err != nil {
 		log.Fatalf("Generation failed %s", err)
 	}
@@ -198,4 +197,5 @@ type BoulevardState struct {
 	DashboardTitleOverride string
 	DashboardTags          []string
 	AlertExtraLabels       []string
+	ExternalMetricNames    []string
 }
