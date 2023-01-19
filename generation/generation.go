@@ -1,6 +1,8 @@
 package generation
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"go/ast"
 	"log"
@@ -196,6 +198,7 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 	if err != nil {
 		log.Fatalf("Output file creation failed: %s", err)
 	}
+	defer outputFile.Close()
 
 	fmt.Println("Writing dashboard to", FriendlyFileName(destFilePath))
 
@@ -210,12 +213,22 @@ func (dg *DashboardGenerator) GenerateGrafanaDashboard(destFilePath string, metr
 		title = fmt.Sprintf("%s Visualised Metrics", normaliseAndLowercaseName(dg.displayStringOrDefault(dg.rawMetricPrefix)))
 	}
 
-	tErr := tmpl.Execute(outputFile, &dashboardData{Metrics: metrics, Title: title, Id: uid, DashboardTags: dashboardTags})
-	if tErr != nil {
+	rawJsonBuf := bytes.Buffer{}
+	if tErr := tmpl.Execute(&rawJsonBuf, &dashboardData{Metrics: metrics, Title: title, Id: uid, DashboardTags: dashboardTags}); tErr != nil {
 		log.Fatalf("template execution: %s", tErr)
 	}
 
-	return outputFile.Close()
+	prettyBuf := bytes.Buffer{}
+	if e := json.Indent(&prettyBuf, rawJsonBuf.Bytes(), "", "\t"); e != nil {
+		log.Fatalf("JSON prettifying failed: %s", e)
+	}
+
+	_, err = outputFile.Write(prettyBuf.Bytes())
+	if err != nil {
+		log.Fatalf("Dashboard write failed: %s", err)
+	}
+
+	return nil
 }
 
 func (dg *DashboardGenerator) displayStringOrDefault(desired string) string {
