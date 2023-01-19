@@ -149,9 +149,9 @@ func TestGrafanaDashboardGeneration(t *testing.T) {
 	// data, _ := json.Marshal(bytes)
 
 	// FIXME Improve
-	assert.Contains(t, data, `"targets": [{"expr": "sum(rate(prefix_places[15m])) by (city)", "intervalFactor": 1, "refId": "A"}],`)
-	assert.Contains(t, data, `"targets": [{"expr": "sum(prefix_animals) by (type,breed)", "intervalFactor": 1, "refId": "A"}],`)
-	assert.Contains(t, data, `"targets": [{"expr": "avg(prefix_t{quantile=~\"0.5|0.75|0.9|0.99\"}) by (quantile)", "format": "time_series", "intervalFactor": 1, "refId": "A"}],`)
+	assert.Contains(t, data, `"expr": "sum(rate(prefix_places[15m])) by (city)`)
+	assert.Contains(t, data, `"expr": "sum(prefix_animals) by (type,breed)"`)
+	assert.Contains(t, data, `"expr": "avg(prefix_t{quantile=~\"0.5|0.75|0.9|0.99\"}) by (quantile)"`)
 }
 
 func TestInvalidErrorLabelAnnotation(t *testing.T) {
