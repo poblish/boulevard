@@ -2,7 +2,6 @@ package generation
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -109,7 +108,7 @@ func TestAlertRuleGeneration(t *testing.T) {
 	generator := &DashboardGenerator{}
 	_, _ = generator.DiscoverMetrics(loadedPkgs)
 
-	tempFile, err := ioutil.TempFile("", "x*.yaml")
+	tempFile, err := os.CreateTemp("", "x*.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -122,7 +121,7 @@ func TestAlertRuleGeneration(t *testing.T) {
 	assert.Equal(t, 2, alertMetrics.Count)
 	assert.FileExists(t, tempFile.Name())
 
-	bytes, _ := ioutil.ReadFile(tempFile.Name())
+	bytes, _ := os.ReadFile(tempFile.Name())
 	assert.Equal(t, strings.TrimSpace(string(bytes)), strings.TrimSpace(expectedOutput))
 }
 
@@ -133,7 +132,7 @@ func TestGrafanaDashboardGeneration(t *testing.T) {
 	generator := &DashboardGenerator{}
 	metrics, _ := generator.DiscoverMetrics(loadedPkgs)
 
-	tempFile, err := ioutil.TempFile("", "dash*.json")
+	tempFile, err := os.CreateTemp("", "dash*.json")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -145,7 +144,7 @@ func TestGrafanaDashboardGeneration(t *testing.T) {
 	assert.NoError(t, err)
 	assert.FileExists(t, tempFile.Name())
 
-	bytes, _ := ioutil.ReadFile(tempFile.Name())
+	bytes, _ := os.ReadFile(tempFile.Name())
 	data := strings.TrimSpace(string(bytes))
 	// data, _ := json.Marshal(bytes)
 
@@ -170,7 +169,7 @@ func TestInvalidErrorLabelAnnotation(t *testing.T) {
 
 	assert.Equal(t, names, []string{"prefix_not_e"})
 
-	tempFile, err := ioutil.TempFile("", "x*.yaml")
+	tempFile, err := os.CreateTemp("", "x*.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -201,7 +200,7 @@ func TestBadErrorRateAnnotations(t *testing.T) {
 	generator := &DashboardGenerator{}
 	_, _ = generator.DiscoverMetrics(loadedPkgs)
 
-	tempFile, err := ioutil.TempFile("", "x*.yaml")
+	tempFile, err := os.CreateTemp("", "x*.yaml")
 	if err != nil {
 		log.Fatal(err)
 	}

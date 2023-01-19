@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -40,7 +39,7 @@ func main() {
 	state := BoulevardState{}
 
 	// See if there's any upstream state to pick up
-	stateFileBytes, err := ioutil.ReadFile(filepath.Join(sourcePath, ".boulevard_state"))
+	stateFileBytes, err := os.ReadFile(filepath.Join(sourcePath, ".boulevard_state"))
 	if err == nil {
 		if err := yaml.Unmarshal(stateFileBytes, &state); err != nil {
 			log.Fatalf("Bad state %s", err)

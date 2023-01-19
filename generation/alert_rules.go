@@ -3,7 +3,6 @@ package generation
 import (
 	"fmt"
 	"go/ast"
-	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -177,7 +176,7 @@ func (rg *RuleGenerator) postProcess(destFilePath string, metricPrefix string, m
 
 	fmt.Println("Writing alert rules to", FriendlyFileName(destFilePath))
 
-	err = ioutil.WriteFile(destFilePath, data, 0644)
+	err = os.WriteFile(destFilePath, data, 0644)
 	if err != nil {
 		return metrics, fmt.Errorf("output error: %v", err)
 	}
