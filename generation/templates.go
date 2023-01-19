@@ -141,14 +141,18 @@ const DefaultDashboardTemplate = `{{define "counter_gauge_cumulative"}}
   "links": [],
   "panels": [
 
-{{range $index, $metric := .Metrics }}{{if $index}},{{end}}
+{{ $alreadyGotError := false }}
+{{range $index, $metric := .Metrics }}
     {{if eq $metric.MetricType "counter" "gauge" }}
-        {{template "counter_gauge_cumulative" . }},
+        {{ if $index }},{{end}}{{template "counter_gauge_cumulative" . }},
         {{template "counter_gauge_rate" . }}
     {{else if eq $metric.MetricType "errors"}}
-        {{template "errors" . }}
+        {{ if not $alreadyGotError }}
+			{{ if $index }},{{end}}{{template "errors" . }}
+			{{ $alreadyGotError = true }}
+		{{ end }}
     {{else if eq $metric.MetricType "summary" "timer"}}
-        {{template "summary_timer" . }}
+        {{ if $index }},{{end}}{{template "summary_timer" . }}
     {{end}}
 {{end}}
 
