@@ -328,6 +328,8 @@ func (dg *DashboardGenerator) interceptMetric(pkg *packages.Package, metricCall 
 		} else {
 			metricLabelString = " by (quantile)"
 		}
+	} else {
+		return nil
 	}
 
 	return &metric{metricCall: metricCall, normalisedMetricName: normalisedMetricName, PanelTitle: metricName, MetricType: metricType, MetricLabels: metricLabelString}
