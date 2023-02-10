@@ -103,7 +103,7 @@ func (dg *DashboardGenerator) DiscoverMetrics(loadedPkgs []*packages.Package) ([
 						if subExprTypeName != nil && strings.Contains(subExprTypeName.String(), PromenadePkg) {
 
 							metricName := obtainConstantValue(eachPkg, stmt.Args[0], func(value interface{}) string {
-								log.Fatalf("Unexpected type: %v", value)
+								fmt.Println("Ignore unexpected type: %v", value)
 								return "" // unused
 							})
 
