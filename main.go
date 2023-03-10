@@ -160,9 +160,11 @@ func main() {
 		}
 	}
 
-	err = generator.GenerateGrafanaDashboard(dashboardOutputPath, metrics, state.DashboardTags, state.ExternalMetricNames)
-	if err != nil {
-		log.Fatalf("Generation failed %s", err)
+	if len(metrics) > 0 || len(state.ExternalMetricNames) > 0 {
+		err = generator.GenerateGrafanaDashboard(dashboardOutputPath, metrics, state.DashboardTags, state.ExternalMetricNames)
+		if err != nil {
+			log.Fatalf("Generation failed %s", err)
+		}
 	}
 }
 
