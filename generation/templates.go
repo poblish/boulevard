@@ -159,6 +159,7 @@ const DefaultDashboardTemplate = `{{define "counter_gauge_cumulative"}}
 {{end}}
 {{range $metric := .ExternalTimers }}
 	{{ if $foundAny }},{{end}}{{template "summary_timer" . }}
+	{{ $foundAny = true }}
 {{end}}
 
   ],

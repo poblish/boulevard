@@ -147,24 +147,22 @@ func main() {
 		log.Fatalf("Metrics discovery failed %s", err)
 	}
 
-	if len(metrics) < 1 {
-		return // nothing to do
-	}
+	if len(metrics) > 0 {
+		// FIXME Hardcoded name
+		alertMetrics, err := generator.GenerateAlertRules(rulesOutputPath, generation.OutputOptions{AlertRuleFormat: alertRuleFormat, ExtraLabels: alertExtraLabels})
+		if err != nil {
+			log.Fatalf("Alert rule generation failed %s", err)
+		}
 
-	// FIXME Hardcoded name
-	alertMetrics, err := generator.GenerateAlertRules(rulesOutputPath, generation.OutputOptions{AlertRuleFormat: alertRuleFormat, ExtraLabels: alertExtraLabels})
-	if err != nil {
-		log.Fatalf("Alert rule generation failed %s", err)
+		if metricsLabelsPath != "" {
+			metricsOutput := generation.AlertMetricsOutput{AlertsCount: alertMetrics.Count, UniqueMetricsCount: len(metrics)}
+			metricsOutput.WriteToFile(metricsLabelsPath)
+		}
 	}
 
 	err = generator.GenerateGrafanaDashboard(dashboardOutputPath, metrics, state.DashboardTags, state.ExternalMetricNames)
 	if err != nil {
 		log.Fatalf("Generation failed %s", err)
-	}
-
-	if metricsLabelsPath != "" {
-		metricsOutput := generation.AlertMetricsOutput{AlertsCount: alertMetrics.Count, UniqueMetricsCount: len(metrics)}
-		metricsOutput.WriteToFile(metricsLabelsPath)
 	}
 }
 
